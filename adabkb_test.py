@@ -9,7 +9,8 @@ function_test = [
     'rosenbrock_2_test_case',
     'hartmann_3_test_case',
     'ackley_3_test_case',
-    'ackley_5_test_case'
+    'ackley_5_test_case',
+    'hartmann6_test_case'
 ]
 
 def adabkb_test_suite():

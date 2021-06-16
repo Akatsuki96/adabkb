@@ -8,7 +8,7 @@ from optimizer import AdaBKB
 
 from sklearn.gaussian_process.kernels import RBF
 
-from benchmark_functions import Branin, Booth, SixHumpCamel, Rosenbrock, Hartmann3, Ackley, Shekel
+from benchmark_functions import Branin, Booth, SixHumpCamel, Rosenbrock, Hartmann3, Ackley, Shekel, Hartmann6
 
 class AdaBKBTestCase(ut.TestCase):
 
@@ -189,5 +189,29 @@ class AdaBKBTestCase(ut.TestCase):
             t += 1
         fun = Ackley(5)
         self.assertAlmostEqual(fun(xt), fun.global_min[1], delta=5.0)
+
+    def hartmann6_test_case(self):
+        lam=0.01
+        noise_var = lam**2
+        N = 2
+        v_1 =  N * np.sqrt(6)
+        sigma = 1.10
+        gfun = lambda x : (np.sqrt(2/sigma) * x)
+        rho = 1/ N#N**(- 1/3)
+        opt = OptimizerOptions(GreedyExpansion(), gfun, v_1=v_1, rho=rho, lam=lam, noise_var=noise_var, delta=1e-5, verbose=False)
+        optimizer = AdaBKB(RBF(sigma), opt)
+        t = 0
+        T = 700
+        h_max = 10
+        test_fun = Hartmann6(noise_params=(0.01, np.random.RandomState(42)))
+        optimizer.initialize(lambda x: -test_fun(x),test_fun.search_space, N, budget=T, h_max=h_max)
+        while t < T:
+            xt, idx = optimizer.step()
+            yt = -test_fun(xt)
+            optimizer.update_model(idx, yt)
+            t += 1
+        fun = Hartmann6()
+        self.assertAlmostEqual(fun(xt), fun.global_min[1], delta=1.0)
+
 
 

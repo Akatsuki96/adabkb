@@ -218,3 +218,32 @@ class Shekel(BenchmarkFunction): # Shekel function with m = 10
                 outer = outer + 1/(inner+bi)
         y = -outer
         return self.add_noise(y)
+
+class Hartmann6(BenchmarkFunction):
+
+    def __init__(self, noise_params : Tuple = (0.0, None)):
+
+        minimizer = np.array([0.20169, 0.150011, 0.476874, 0.275332, 0.311652, 0.6573])
+        global_min = (minimizer, -3.32237)
+        search_space = np.array([[0., 1.] for _ in range(6)])
+        super().__init__("Hartmann 6",search_space, global_min, noise_params= noise_params)
+
+    def __call__(self, x):
+        alpha = np.array([1.0, 1.2, 3.0, 3.2])
+        A = np.array([10, 3, 17, 3.5, 1.7, 8,
+            0.05, 10, 17, 0.1, 8, 14,
+            3, 3.5, 1.7, 10, 17, 8,
+            17, 8, 0.05, 10, 0.1, 14]).reshape(4,6)
+
+        P = (10**(-4)) * np.array([1312, 1696, 5569, 124, 8283, 5886,
+               2329, 4135, 8307, 3736, 1004, 9991,
+               2348, 1451, 3522, 2883, 3047, 6650,
+               4047, 8828, 8732, 5743, 1091, 381]).reshape(4,6)
+        f = 0
+        for i in range(4):
+            inner = 0
+            for j in range(6):
+                inner += A[i,j]*((x[j] - P[i,j])**2)
+            inner = np.exp(-inner)
+            f += alpha[i] * inner
+        return self.add_noise(-f)
