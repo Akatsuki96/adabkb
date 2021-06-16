@@ -6,6 +6,8 @@ from test_cases import AdaBKBTestCase
 def adabkb_test_suite():
     suite = ut.TestSuite()
     suite.addTest(AdaBKBTestCase('initialization_test_case'))
+    suite.addTest(AdaBKBTestCase('single_step_test_case'))
+    suite.addTest(AdaBKBTestCase('branin_test_case'))
     return suite
 
 
