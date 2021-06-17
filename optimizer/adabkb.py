@@ -4,17 +4,12 @@ from options import OptimizerOptions
 
 from sklearn.gaussian_process.kernels import Kernel
 
-import numpy as np
-from scipy.linalg import solve_triangular, svd, qr, qr_update, LinAlgError
-from utils import *
-from options import OptimizerOptions
+from utils import GreedyExpansion, diagonal_dot, stable_invert_root, PartitionTreeNode
 
+from pytictoc import TicToc
 import itertools as it
 import time
 
-from sklearn.gaussian_process import GaussianProcessRegressor
-from sklearn.gaussian_process.kernels import Kernel
-from pytictoc import TicToc
 
 
 class AdaBKB:
@@ -132,23 +127,24 @@ class AdaBKB:
         evaluated_means = Xstar_embedded.dot(self.w)
         return evaluated_means
 
-    def _update_embedding(self, only_extend = False):
-        if only_extend:
-            self.K_km = self.dot(self.X, self.active_set)
-            self.X_embedded = self.K_km.dot(self.U_thin * self.S_thin_inv_sqrt.T)
-            self.X_norms_embedded = np.square(np.linalg.norm(self.X_embedded, axis = 1))
-        else:
-            self.K_mm = self.dot(self.active_set)
-            self.K_km = self.dot(self.X, self.active_set)
-            try:
-                U, S, _ = svd(self.K_mm)
-            except LinAlgError:
-                U, S, _ = svd(self.K_mm, lapack_driver='gesvd')
-            self.U_thin, self.S_thin_inv_sqrt = stable_invert_root(U, S)
-            
-            self.X_embedded = self.K_km.dot(self.U_thin * self.S_thin_inv_sqrt.T)
-            self.X_norms_embedded = np.square(np.linalg.norm(self.X_embedded, axis = 1))
-            self.m = len(self.S_thin_inv_sqrt)
+    def _expand_embedding(self):
+        self.K_km = self.dot(self.X, self.active_set)
+        self.X_embedded = self.K_km.dot(self.U_thin * self.S_thin_inv_sqrt.T)
+        self.X_norms_embedded = np.square(np.linalg.norm(self.X_embedded, axis = 1))
+        
+
+    def _update_embedding(self):
+        self.K_mm = self.dot(self.active_set)
+        self.K_km = self.dot(self.X, self.active_set)
+        try:
+            U, S, _ = svd(self.K_mm)
+        except LinAlgError:
+            U, S, _ = svd(self.K_mm, lapack_driver='gesvd')
+        self.U_thin, self.S_thin_inv_sqrt = stable_invert_root(U, S)
+        
+        self.X_embedded = self.K_km.dot(self.U_thin * self.S_thin_inv_sqrt.T)
+        self.X_norms_embedded = np.square(np.linalg.norm(self.X_embedded, axis = 1))
+        self.m = len(self.S_thin_inv_sqrt)
 
     def _update_variances(self, idx_to_update=None):
         if idx_to_update is None:
@@ -238,7 +234,7 @@ class AdaBKB:
                 extended = True
         if extended:
             self.X_norms = diagonal_dot(self.X, self.dot)
-            self._update_embedding(only_extend=True)
+            self._expand_embedding() #only_extend=True)
         return new_x
 
 
@@ -265,7 +261,7 @@ class AdaBKB:
                 self.leaf_set = root.expand_node()
                 self.I = np.zeros(len(self.leaf_set))
                 self._extend_search_space(self.leaf_set)
-                self._update_embedding(only_extend=True)
+                self._expand_embedding()
                 self._update_mean_variances()
                 self._update_beta()
                 self._compute_index()
@@ -285,16 +281,18 @@ class AdaBKB:
 
     def _select_node(self):
         selected_idx = np.argmax(self.I)
-        #selected_idx_node= self.node2idx[tuple(self.leaf_set[selected_idx].x)]
-
         Vh = self._compute_V(self.leaf_set[selected_idx].level)
         return selected_idx, Vh
+
+
+    def _can_be_expanded(self, node_idx, h, Vh):
+        return np.sqrt(self.variances[node_idx]) * self.beta <= Vh and h < self.h_max
 
     def step(self):
         while True:
             leaf_idx, Vh = self._select_node()
             node_idx =self.node2idx[tuple(self.leaf_set[leaf_idx].x)]
-            if np.sqrt(self.variances[node_idx]) * self.beta <= Vh and self.leaf_set[leaf_idx].level < self.h_max:
+            if self._can_be_expanded(node_idx, self.leaf_set[leaf_idx].level, Vh ):
                 new_nodes = self.leaf_set[leaf_idx].expand_node()
                 self.leaf_set = np.delete(self.leaf_set, leaf_idx, 0)
                 self.I = np.delete(self.I, leaf_idx, 0)
