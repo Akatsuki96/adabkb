@@ -1,6 +1,6 @@
 import unittest as ut
 
-from test_cases import AdaBKBTestCase
+from test_cases import AdaBKBTestCase, AdaBBKBTestCase
 
 function_test = [
     'branin_test_case',
@@ -23,7 +23,14 @@ def adabkb_test_suite():
     return suite
 
 
+def adabbkb_test_suite():
+    suite = ut.TestSuite()
+    suite.addTest(AdaBBKBTestCase('temp_test'))
+    return suite
+
+
 if __name__ == "__main__":
     runner = ut.TextTestRunner()
-    runner.run(adabkb_test_suite())
+    #runner.run(adabkb_test_suite())
+    runner.run(adabbkb_test_suite())
     

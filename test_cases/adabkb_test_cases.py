@@ -4,11 +4,12 @@ import numpy as np
 
 from options import OptimizerOptions
 from utils import GreedyExpansion
-from optimizer import AdaBKB
+from optimizer import AdaBKB, AdaBBKB
 
 from sklearn.gaussian_process.kernels import RBF
 
 from benchmark_functions import Branin, Booth, SixHumpCamel, Rosenbrock, Hartmann3, Ackley, Shekel, Hartmann6
+from sklearn.gaussian_process.kernels import PairwiseKernel
 
 class AdaBKBTestCase(ut.TestCase):
 
@@ -214,4 +215,37 @@ class AdaBKBTestCase(ut.TestCase):
         self.assertAlmostEqual(fun(xt), fun.global_min[1], delta=1.0)
 
 
+class AdaBBKBTestCase(ut.TestCase):
 
+    def setUp(self):
+        rnd_state = np.random.RandomState(42)
+        d = 1
+        pwkernel = PairwiseKernel(metric='linear')
+        w_star = rnd_state.randn(d).reshape(1,-1)
+        lam=0.01
+
+        self.test_fun = lambda x: -(x**2 + rnd_state.randn()*lam)#pwkernel(x, w_star)
+        self.search_space = np.array([[-100.0, 100.0]]).reshape(-1, 2)
+        sigma = 1.0
+        self.N = 3
+        noise_var = lam**2
+        self.kernel = RBF(sigma)
+        gfun = lambda x : (np.sqrt(2)/sigma) * x
+        v_1 = self.N
+        rho = self.N ** (-1)
+        self.opt = OptimizerOptions(GreedyExpansion(), gfun, v_1=v_1, 
+                            rho=rho, lam=lam, noise_var=noise_var, delta=0.0005, verbose=True)
+
+
+    def temp_test(self):
+        optimizer = AdaBBKB(self.kernel,ratio_threshold=1.0, options=self.opt)
+        optimizer.initialize(self.test_fun,self.search_space, self.N, budget=30, h_max=6)
+        for t in range(0, 100):
+            xs, batch = optimizer.step()
+            print("[--] batch size: {}".format(len(batch)))
+            ys = []
+            for x in xs:
+                ys.append( self.test_fun(x)[0])
+            optimizer.update_model(batch, ys)
+        print([node.level for node in optimizer.leaf_set])
+        print("[--] x*: {}".format(xs))

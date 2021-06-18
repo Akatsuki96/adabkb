@@ -10,115 +10,18 @@ from pytictoc import TicToc
 import itertools as it
 import time
 
+from optimizer import AbsOptimizer
 
-
-class AdaBKB:
-    def __init__(self, dot_fun: Kernel, options: OptimizerOptions = None):
-        self.dot = dot_fun
-        self.options = options
-        self.node2idx = {}
-        self.father_ucbs = {}
-        #self.X = np.zeros((1, options.search_space))
-        #self.Y = np.zeros(1)
-        self.num_nodes = 0
-        self.logdet = 1
-        self.beta = 1
-        #self.d = d
-
-    @property
-    def expand_fun(self):
-        return self.options.expand_fun
-
-    @property
-    def qbar(self):
-        return self.options.qbar
-
-    @property
-    def lam(self):
-        return self.options.lam
-
-    @property
-    def random_state(self):
-        return self.options.random_state
-
-    @property
-    def fnorm(self):
-        return self.options.fnorm
-
-    @property
-    def noise_variance(self):
-        return self.options.noise_var
-
-    @property
-    def delta(self):
-        return self.options.delta
+class AdaBKB(AbsOptimizer):
 
     @property
     def pulled_arms_matrix(self):
         return self.X_embedded[self.pulled_arms_count != 0, :]
 
     @property
-    def unique_arms_pulled(self):
-        return np.count_nonzero(self.pulled_arms_count)
-
-    @property
-    def dict_size(self):
-        return self.dict_arms_count.sum()
-
-    @property
-    def dict_size_unique(self):
-        return np.count_nonzero(self.dict_arms_count)
-
-    @property
     def embedding_size(self):
         return self.m
 
-    @property
-    def early_stopping(self):
-        return self.options.early_stopping
-
-    @property
-    def v_1(self):
-        return self.options.v_1
-    
-    @property
-    def rho(self):
-        return self.options.rho
-
-    @property
-    def gfun(self):
-        return self.options.gfun
-
-    @property
-    def verbose(self):
-        return self.options.verbose
-
-
-    def _compute_V(self, h):
-        """Given a level \\(h \\geq 0\\), it compute \\(V_h\\) s.t. \\(\\forall i\\)
-        \\[\\sup\\limits_{x, x^{\\prime} \\in X_{h,i}} |f(x) - f(x^\\prime)| \\leq V_h\\]
-
-        Returns
-        -------
-        Vh : float
-            upper bound on the function variation in cell at level h
-        """
-        return self.gfun(self.v_1 * (self.rho**h) ) * self.fnorm
-        
-    def _init_maps(self, xroot, d: int = 1):
-        assert d > 0
-        self.X = np.zeros((1, d))
-        self.Y = np.zeros(1)
-        self.X[0] = xroot
-        self.node2idx[tuple(xroot)] = self.num_nodes
-        self.num_nodes += 1
-        self.d = d
-        self.X_norms = diagonal_dot(self.X, self.dot)
-        self.pulled_arms_count = np.zeros(self.X.shape[0])
-        self.dict_arms_count = np.zeros(1)
-        self.active_set = self.X
-        self.means = np.zeros(1)
-        self.variances = np.zeros(1)
     
     def _evaluate_model(self, Xstar):
         #K_sm = self.dot(self.X, self.active_set)
@@ -190,14 +93,16 @@ class AdaBKB:
         assert np.isfinite(self.beta)
 
 
-    def _update_model(self, idx, yt, init_phase : bool = False):
-        tictoc = TicToc()
-        tictoc.tic()
-        self.Y[idx] += yt
-        self.pulled_arms_count[idx] += 1
+    def _update_model(self, indices, ys, init_phase : bool = False):
+        
+        if self.verbose:
+            tictoc = TicToc()
+            tictoc.tic()
+        for i in range(len(indices)):
+            self.Y[indices[i]] += ys[i]
+            self.pulled_arms_count[indices[i]] += 1
         if not init_phase:
             self._resample_dict()
-        
         self._update_embedding()
         self._update_mean_variances()
         self._update_beta()
@@ -207,7 +112,7 @@ class AdaBKB:
             tictoc.toc('[--] update completed in')
         
     def update_model(self, idx, yt):
-        self._update_model(idx, yt, False)
+        self._update_model([idx], [yt], False)
 
     def _resample_dict(self):
         resample_dict = self.random_state.rand(self.X.shape[0]) < (self.variances * self.pulled_arms_count * self.qbar)
@@ -253,7 +158,7 @@ class AdaBKB:
             if self.verbose:
                 t.toc('[--] f(x_root) evaluated [n. %d] in' % ne)
             ne += 1
-            self._update_model(0, yt, init_phase=True)
+            self._update_model([0], [yt], init_phase=True)
             if self.verbose:
                 print("[--] mu[root] : {}\t beta*sigma[root]: {}\t V_0: {}\n".format(self.means[0], self.beta*np.sqrt(self.variances[0]), Vh_root))
             root_std = np.sqrt(self.variances[0]) 
@@ -261,9 +166,8 @@ class AdaBKB:
                 self.leaf_set = root.expand_node()
                 self.I = np.zeros(len(self.leaf_set))
                 self._extend_search_space(self.leaf_set)
-                self._expand_embedding()
+                #self._expand_embedding()
                 self._update_mean_variances()
-                self._update_beta()
                 self._compute_index()
                 return self.leaf_set
         raise Exception("Initialization not completed! You should increase budget!")
