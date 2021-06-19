@@ -86,7 +86,7 @@ class AbsOptimizer:
         Vh : float
             upper bound on the function variation in cell at level h
         """
-        return 1/(h+1) * self.fnorm #* self.gfun(self.v_1 * (self.rho**h) )
+        return self.fnorm * self.gfun(self.v_1 * (self.rho**h) ) 
         
     def _init_maps(self, xroot, d: int = 1):
         assert d > 0

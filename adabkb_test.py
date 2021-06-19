@@ -26,11 +26,15 @@ def adabkb_test_suite():
 def adabbkb_test_suite():
     suite = ut.TestSuite()
     suite.addTest(AdaBBKBTestCase('temp_test'))
+    suite.addTest(AdaBBKBTestCase('branin_test_case'))
+    suite.addTest(AdaBBKBTestCase('six_hump_camel_test_case'))
+    suite.addTest(AdaBBKBTestCase('hartmann_3_test_case'))
+    suite.addTest(AdaBBKBTestCase('hartmann6_test_case'))
     return suite
 
 
 if __name__ == "__main__":
     runner = ut.TextTestRunner()
-    #runner.run(adabkb_test_suite())
+    runner.run(adabkb_test_suite())
     runner.run(adabbkb_test_suite())
     

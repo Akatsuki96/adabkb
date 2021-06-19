@@ -246,7 +246,6 @@ class AdaBBKB(AbsOptimizer):
             father_idx = self.node2idx[tuple(selected_node.father.x)]
             Vh = self._compute_V(selected_node.level)
             if self._can_be_expanded(node_idx, selected_node.level, Vh):
-                #print("[--] Expansion")
                 new_nodes = self.leaf_set[leaf_idx].expand_node()
                 self.leaf_set = np.delete(self.leaf_set, leaf_idx, 0)
                 self.I = np.delete(self.I, leaf_idx, 0)

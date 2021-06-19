@@ -48,10 +48,13 @@ class AdaBKBTestCase(ut.TestCase):
         while t < T:
             xt, idx = optimizer.step()
             yt = -test_fun(xt)
+           # print("[--] xt: {}\t yt: {}".format(xt, yt))
             optimizer.update_model(idx, yt)
             t += 1
         fun = Branin()
+       # print("[--] f(x_T) = {}".format(fun(xt)))
         self.assertAlmostEqual(fun(xt), fun.global_min[1], delta=1.0)
+
 
     def booth_test_case(self):
         lam=1e-10
@@ -143,7 +146,7 @@ class AdaBKBTestCase(ut.TestCase):
             optimizer.update_model(idx, yt)
             t += 1
         fun = Hartmann3()
-        self.assertAlmostEqual(fun(xt), fun.global_min[1], delta=2.0)
+        self.assertAlmostEqual(fun(xt), fun.global_min[1], delta=1.0)
 
     def ackley_3_test_case(self):
         lam=0.01
@@ -219,33 +222,143 @@ class AdaBBKBTestCase(ut.TestCase):
 
     def setUp(self):
         rnd_state = np.random.RandomState(42)
-        d = 1
-        pwkernel = PairwiseKernel(metric='linear')
-        w_star = rnd_state.randn(d).reshape(1,-1)
-        lam=0.01
+        lam=1e-10
 
-        self.test_fun = lambda x: -(x**2 + rnd_state.randn()*lam)#pwkernel(x, w_star)
-        self.search_space = np.array([[-100.0, 100.0]]).reshape(-1, 2)
-        sigma = 1.0
+        self.test_fun = lambda x: -(x**2 )#pwkernel(x, w_star)
+        self.search_space = np.array([[-1.0, 10.0]]).reshape(-1, 2)
+        sigma = 15.0
         self.N = 3
         noise_var = lam**2
         self.kernel = RBF(sigma)
-        gfun = lambda x : (np.sqrt(2)/sigma) * x
+        self.gfun = lambda x : (np.sqrt(2)/sigma) * x
         v_1 = self.N
-        rho = self.N ** (-1)
-        self.opt = OptimizerOptions(GreedyExpansion(), gfun, v_1=v_1, 
-                            rho=rho, lam=lam, noise_var=noise_var, delta=0.0005, verbose=True)
+        rho = 0.1#self.N ** (-1)
+        self.opt = OptimizerOptions(GreedyExpansion(), self.gfun, v_1=v_1, 
+                            rho=rho, lam=lam, noise_var=noise_var, delta=0.0005, verbose=False)
 
 
     def temp_test(self):
-        optimizer = AdaBBKB(self.kernel,ratio_threshold=1.0, options=self.opt)
+        optimizer = AdaBBKB(self.kernel,ratio_threshold=2.0, options=self.opt)
         optimizer.initialize(self.test_fun,self.search_space, self.N, budget=30, h_max=6)
-        for t in range(0, 100):
+        t = 0
+        T = 500
+        while t <= T:
             xs, batch = optimizer.step()
-            print("[--] batch size: {}".format(len(batch)))
             ys = []
             for x in xs:
                 ys.append( self.test_fun(x)[0])
             optimizer.update_model(batch, ys)
-        print([node.level for node in optimizer.leaf_set])
-        print("[--] x*: {}".format(xs))
+            t+=len(batch)
+
+    def branin_test_case(self):
+        optimizer = AdaBBKB(RBF(15.0), ratio_threshold=2.0, options=self.opt)
+        t = 0
+        T = 500
+        h_max = 6
+        test_fun = Branin(noise_params=(0.01, np.random.RandomState(42)))
+        optimizer.initialize(lambda x: -test_fun(x),test_fun.search_space, self.N, budget=T, h_max=h_max)
+        while t < T:
+            xs, batch = optimizer.step()
+            if t + len(batch) > T:
+                xs = xs[:T - t]
+                batch = batch[:T - t]
+            ys = []
+            for x in xs:
+                yt = -test_fun(x)
+                ys.append(yt)
+
+            optimizer.update_model(batch, ys)
+            t+=len(batch)
+
+        fun = Branin()
+        self.assertAlmostEqual(fun(xs[0]), fun(fun.global_min[0][0]),delta=1)
+
+    def six_hump_camel_test_case(self):
+        lam=1e-5
+        noise_var = lam**2
+        N = 3
+        v_1 = N * np.sqrt(2)
+        sigma = 0.7
+        gfun = lambda x : (np.sqrt(2)/sigma) * x
+        rho = 1/(N**2)
+        opt = OptimizerOptions(GreedyExpansion(), gfun, v_1=v_1, rho=rho, lam=lam, noise_var=noise_var, delta=0.0005, verbose=False)
+        optimizer = AdaBBKB(RBF(sigma), ratio_threshold=2.0,options=opt)
+        t = 0
+        T = 500
+        h_max = 6
+        test_fun = SixHumpCamel(noise_params=(0.01, np.random.RandomState(42)))
+        optimizer.initialize(lambda x: -test_fun(x),test_fun.search_space, N, budget=T, h_max=h_max)
+        while t < T:    
+            xs, batch = optimizer.step()
+            if t + len(batch) > T:
+                xs = xs[:T - t]
+                batch = batch[:T - t]
+            ys = []
+            for x in xs:
+                yt = -test_fun(x)
+                ys.append(yt)
+
+            optimizer.update_model(batch, ys)
+            t+=len(batch)
+        fun = SixHumpCamel()
+        self.assertAlmostEqual(fun(xs[0]), fun.global_min[1], delta=1.0)
+
+    def hartmann_3_test_case(self):
+        lam=0.01
+        noise_var = lam**2
+        N = 2
+        v_1 = N * np.sqrt(2)
+        sigma = 0.15
+        gfun = lambda x : (np.sqrt(2)/sigma) * x
+        rho = 1/(N**2)
+        opt = OptimizerOptions(GreedyExpansion(), gfun, v_1=v_1, rho=rho, lam=lam, noise_var=noise_var, delta=0.000025, verbose=False)
+        optimizer = AdaBBKB(RBF(sigma), ratio_threshold=2.0,options=opt)
+        t = 0
+        T = 500
+        h_max = 6
+        test_fun = Hartmann3(noise_params=(0.01, np.random.RandomState(42)))
+        optimizer.initialize(lambda x: -test_fun(x),test_fun.search_space, N, budget=T, h_max=h_max)
+        while t < T:    
+            xs, batch = optimizer.step()
+            if t + len(batch) > T:
+                xs = xs[:T - t]
+                batch = batch[:T - t]
+            ys = []
+            for x in xs:
+                yt = -test_fun(x)
+                ys.append(yt)
+
+            optimizer.update_model(batch, ys)
+            t+=len(batch)
+        fun = Hartmann3()
+        self.assertAlmostEqual(fun(xs[0]), fun.global_min[1], delta=1.0)
+
+    def hartmann6_test_case(self):
+        lam=0.01
+        noise_var = lam**2
+        N = 2
+        v_1 =  N * np.sqrt(6)
+        sigma = 1.10
+        gfun = lambda x : (np.sqrt(2/sigma) * x)
+        rho = 1/ N#N**(- 1/3)
+        opt = OptimizerOptions(GreedyExpansion(), gfun, v_1=v_1, rho=rho, lam=lam, noise_var=noise_var, delta=1e-5, verbose=False)
+        optimizer = AdaBBKB(RBF(sigma), ratio_threshold=2.0, options=opt)
+        t = 0
+        T = 700
+        h_max = 10
+        test_fun = Hartmann6(noise_params=(0.01, np.random.RandomState(42)))
+        optimizer.initialize(lambda x: -test_fun(x),test_fun.search_space, N, budget=T, h_max=h_max)
+        while t < T:    
+            xs, batch = optimizer.step()
+            if t + len(batch) > T:
+                xs = xs[:T - t]
+                batch = batch[:T - t]
+            ys = []
+            for x in xs:
+                yt = -test_fun(x)
+                ys.append(yt)
+
+            optimizer.update_model(batch, ys)
+            t+=len(batch)
+        fun = Hartmann6()
+        self.assertAlmostEqual(fun(xs[0]), fun.global_min[1], delta=1.0)
