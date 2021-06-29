@@ -2,5 +2,4 @@ numpy
 scipy
 sklearn
 pytictoc
-itertools
 matplotlib
