@@ -192,14 +192,14 @@ never-returning-functions=sys.exit,argparse.parse_error
 [BASIC]
 
 # Naming style matching correct argument names.
-argument-naming-style=snake_case
+argument-naming-style=
 
 # Regular expression matching correct argument names. Overrides argument-
 # naming-style.
 #argument-rgx=
 
 # Naming style matching correct attribute names.
-attr-naming-style=snake_case
+attr-naming-style=
 
 # Regular expression matching correct attribute names. Overrides attr-naming-
 # style.
@@ -250,7 +250,7 @@ const-naming-style=UPPER_CASE
 docstring-min-length=-1
 
 # Naming style matching correct function names.
-function-naming-style=snake_case
+function-naming-style=
 
 # Regular expression matching correct function names. Overrides function-
 # naming-style.
@@ -279,14 +279,14 @@ inlinevar-naming-style=any
 #inlinevar-rgx=
 
 # Naming style matching correct method names.
-method-naming-style=snake_case
+method-naming-style=
 
 # Regular expression matching correct method names. Overrides method-naming-
 # style.
 #method-rgx=
 
 # Naming style matching correct module names.
-module-naming-style=snake_case
+module-naming-style=
 
 # Regular expression matching correct module names. Overrides module-naming-
 # style.
@@ -306,7 +306,7 @@ no-docstring-rgx=^_
 property-classes=abc.abstractproperty
 
 # Naming style matching correct variable names.
-variable-naming-style=snake_case
+variable-naming-style=
 
 # Regular expression matching correct variable names. Overrides variable-
 # naming-style.
