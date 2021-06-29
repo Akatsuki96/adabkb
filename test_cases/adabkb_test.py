@@ -1,6 +1,6 @@
 import unittest as ut
 
-from test_cases import AdaBKBTestCase, AdaBBKBTestCase
+from adabkb_test_cases import AdaBKBTestCase, AdaBBKBTestCase
 
 function_test = [
     'branin_test_case',

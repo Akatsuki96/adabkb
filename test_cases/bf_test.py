@@ -1,5 +1,5 @@
 import unittest as ut
-from test_cases import GenericBFTestCase, BraninBFTestCase
+from .adabkb_test_cases import GenericBFTestCase, BraninBFTestCase
 
 def build_suite(tests):
     suite = ut.TestSuite()

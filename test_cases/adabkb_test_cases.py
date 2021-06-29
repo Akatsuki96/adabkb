@@ -1,10 +1,9 @@
 import unittest as ut
 import numpy as np
 
-
-from options import OptimizerOptions
-from utils import GreedyExpansion
-from optimizer import AdaBKB, AdaBBKB
+from adabbkb.options import  OptimizerOptions
+from adabbkb.utils import GreedyExpansion
+from adabbkb.optimizer import AdaBKB, AdaBBKB
 
 from sklearn.gaussian_process.kernels import RBF
 

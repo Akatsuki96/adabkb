@@ -1,22 +1,18 @@
 from scipy.linalg import solve_triangular, svd, qr, qr_update, LinAlgError
 import numpy as np
-from options import OptimizerOptions
+from adabbkb.options import OptimizerOptions
 
 from sklearn.gaussian_process.kernels import Kernel
 
-from utils import GreedyExpansion, diagonal_dot, stable_invert_root, PartitionTreeNode
+from adabbkb.utils import GreedyExpansion, diagonal_dot, stable_invert_root, PartitionTreeNode
 
 from pytictoc import TicToc
 import itertools as it
 import time
 
-from optimizer import AbsOptimizer
+from adabbkb.optimizer import AbsOptimizer
 
-class AdaBBKB(AbsOptimizer):
-    def __init__(self, dot_fun: Kernel, ratio_threshold : float = 2.0, options: OptimizerOptions = None):
-        self.ratio_threshold = ratio_threshold
-        self.global_ratio_bound = 1.0
-        super().__init__(dot_fun, options)
+class AdaBKB(AbsOptimizer):
 
     @property
     def pulled_arms_matrix(self):
@@ -106,24 +102,17 @@ class AdaBBKB(AbsOptimizer):
             self.Y[indices[i]] += ys[i]
             self.pulled_arms_count[indices[i]] += 1
         if not init_phase:
-            self.logdet += np.log(1 + self.variances[indices]).sum() 
-            self.beta = (
-                    np.sqrt(self.lam) * self.fnorm
-                    + np.sqrt(self.noise_variance * (self.ratio_threshold * self.logdet + np.log(1 / self.delta)))
-            )
-            assert(np.isfinite(self.beta))
             self._resample_dict()
-
         self._update_embedding()
         self._update_mean_variances()
-
+        self._update_beta()
         if not init_phase:
             self._compute_index()
         if self.verbose:
             tictoc.toc('[--] update completed in')
         
-    def update_model(self, indices, y_list):
-        self._update_model(indices, y_list, False)
+    def update_model(self, idx, yt):
+        self._update_model([idx], [yt], False)
 
     def _resample_dict(self):
         resample_dict = self.random_state.rand(self.X.shape[0]) < (self.variances * self.pulled_arms_count * self.qbar)
@@ -194,58 +183,20 @@ class AdaBBKB(AbsOptimizer):
                             self.means[self.node2idx[tuple(node.father.x)]] + np.sqrt(self.variances[self.node2idx[tuple(node.father.x)]]) + self._compute_V(node.father.level) 
                         ]) + self._compute_V(node.level)
 
+    def _select_node(self):
+        selected_idx = np.argmax(self.I)
+        Vh = self._compute_V(self.leaf_set[selected_idx].level)
+        return selected_idx, Vh
+
+
     def _can_be_expanded(self, node_idx, h, Vh):
         return np.sqrt(self.variances[node_idx]) * self.beta <= Vh and h < self.h_max
 
-    def _evaluate_index(self, leaf_idx):
-        node = self.leaf_set[leaf_idx]
-        node_idx = self.node2idx[tuple(node.x)]
-        father_idx = self.node2idx[tuple(node.father.x)]
-        return np.min([
-                self.means[node_idx] + np.sqrt(self.variances[node_idx]),
-                self.means[father_idx] + np.sqrt(self.variances[father_idx]) + self._compute_V(node.father.level)         
-            ]) + self._compute_V(node.level)
-
-    def _extend_search_space(self, leaf_set):
-        extended = False
-        new_x = []
-        for node in leaf_set:
-            if tuple(node.x) not in self.node2idx:
-                new_x.append(node.x)
-                self.node2idx[tuple(node.x)] = self.num_nodes
-                self.num_nodes += 1
-                self.means = np.append(self.means, 0)
-                self.variances = np.append(self.variances, 0)
-                self.pulled_arms_count = np.append(self.pulled_arms_count, 0)
-                self.Y = np.append(self.Y, 0).reshape(-1)
-                self.X = np.append(self.X, node.x).reshape(-1,self.d)
-                extended = True
-        if extended:
-            self.X_norms = diagonal_dot(self.X, self.dot)
-            self._expand_embedding() #only_extend=True)
-        return new_x
-
-
-
     def step(self):
-
-        tmp_variances = self.variances.copy()
-        tmp_Q = self.Q.copy()
-        tmp_R = self.R.copy()
-        tmp_I = self.I.copy()
-        
-        self.global_ratio_bound = 1.
-
-        batch = []
-        selected_x = []
         while True:
-            assert np.all(np.isfinite(tmp_I))
-            leaf_idx = np.argmax(tmp_I)
-            selected_node = self.leaf_set[leaf_idx]
-            node_idx = self.node2idx[tuple(selected_node.x)]
-            father_idx = self.node2idx[tuple(selected_node.father.x)]
-            Vh = self._compute_V(selected_node.level)
-            if self._can_be_expanded(node_idx, selected_node.level, Vh):
+            leaf_idx, Vh = self._select_node()
+            node_idx =self.node2idx[tuple(self.leaf_set[leaf_idx].x)]
+            if self._can_be_expanded(node_idx, self.leaf_set[leaf_idx].level, Vh ):
                 new_nodes = self.leaf_set[leaf_idx].expand_node()
                 self.leaf_set = np.delete(self.leaf_set, leaf_idx, 0)
                 self.I = np.delete(self.I, leaf_idx, 0)
@@ -259,46 +210,5 @@ class AdaBBKB(AbsOptimizer):
                     self.means[self.node2idx[tuple(new_x[i])]] = new_means[i]
                 self._update_variances(new_node_idx)
                 self._compute_index(list(range(len(self.leaf_set) - len(new_nodes), len(self.leaf_set))))
-                #tmp_variances = self.variances.copy()
-                #tmp_Q = self.Q.copy()
-                #tmp_R = self.R.copy()
-                #tmp_I = self.I.copy()
             else:
-                xt = self.X_embedded[leaf_idx, :].reshape(1, -1)
-                selected_x.append(selected_node.x)
-                batch.append(node_idx)
-                #print("[--] xt sq: {}".format(xt.squeeze()))
-                #print("[--] selected: {}\tleaf: {}\t tmp_Q: {}\t tmp_R: {}".format(xt, self.leaf_set[leaf_idx].x, tmp_Q.shape, tmp_R.shape))
-                if xt.shape[1] == 1:
-                    tmp_Q, tmp_R = qr_update(tmp_Q, tmp_R, xt, xt)
-                else:
-                    tmp_Q, tmp_R = qr_update(tmp_Q, tmp_R, xt.squeeze(), xt.squeeze())
-                variance_selected_node = np.dot(xt, solve_triangular(tmp_R, tmp_Q.T.dot(xt.T))).item()
-                #if self.verbose:
-                #    print("[--] xt: {}\t sigma^2(xt): {}".format(xt, variance_selected_node))
-                assert np.all(variance_selected_node >= 0.)
-                assert np.all(np.isfinite(variance_selected_node))
-                tmp_I[leaf_idx] = self._evaluate_index(leaf_idx)
-                candidates_argmax = (tmp_I >= tmp_I[leaf_idx]).nonzero()[0]
-                temp = solve_triangular(tmp_R,
-                                        (self.X_embedded[candidates_argmax, :].dot(tmp_Q)).T,
-                                        overwrite_b=True,
-                                        check_finite=False).T
-                temp *= self.X_embedded[candidates_argmax, :]
-
-                tmp_variances = ((self.X_norms[candidates_argmax]
-                                - self.X_norms_embedded[candidates_argmax]) / self.lam
-                                + np.sum(temp, axis=1))
-                assert np.all(tmp_variances >= 0.)
-                assert np.all(np.isfinite(tmp_variances))
-                if self.verbose:
-                    print("\t[--] candidates idx: {}".format(candidates_argmax))
-                for candidate in candidates_argmax:
-                    tmp_I[candidate] = self._evaluate_index(candidate)
-
-                self.global_ratio_bound += self.variances[leaf_idx].item()
-                if self.verbose:
-                    print("\t[--] global ratio: {}\tthreshold: {}".format(self.global_ratio_bound, self.ratio_threshold)) 
-                if self.global_ratio_bound > self.ratio_threshold:
-                    break
-        return np.array(selected_x), batch
+                return self.leaf_set[leaf_idx].x, node_idx
