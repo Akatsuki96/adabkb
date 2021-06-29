@@ -259,7 +259,7 @@ class AdaBBKB(AbsOptimizer):
                     self.means[self.node2idx[tuple(new_x[i])]] = new_means[i]
                 self._update_variances(new_node_idx)
                 self._compute_index(list(range(len(self.leaf_set) - len(new_nodes), len(self.leaf_set))))
-                #tmp_variances = self.variances.copy()
+                tmp_variances = self.variances.copy()
                 #tmp_Q = self.Q.copy()
                 #tmp_R = self.R.copy()
                 #tmp_I = self.I.copy()
