@@ -86,7 +86,10 @@ class AdaBBKB(AbsOptimizer):
 
         self.w = solve_triangular(self.R, self.Q.T.dot(pulled_arms_matrix.T.dot(self.Y[self.pulled_arms_count != 0])))
 
-        self.means = self.X_embedded.dot(self.w)
+        if idx_to_update is None:
+            self.means = self.X_embedded.dot(self.w)
+        else:
+            self.means[idx_to_update] = self.X_embedded[idx_to_update, :].dot(self.w)
         assert np.all(np.isfinite(self.means))
 
         self._update_variances(idx_to_update)
@@ -115,7 +118,15 @@ class AdaBBKB(AbsOptimizer):
             self._resample_dict()
 
         self._update_embedding()
-        self._update_mean_variances()
+        if init_phase:
+            self._update_mean_variances(idx_to_update=[0])
+        else:
+            to_upd = np.concatenate([
+                [self._get_node_idx(node) for node in self.leaf_set],
+                list(set([self._get_node_idx(node.father) for node in self.leaf_set]))
+            ])
+            self._update_mean_variances(idx_to_update=to_upd)
+
 
         if not init_phase:
             self._compute_index()
@@ -178,7 +189,11 @@ class AdaBBKB(AbsOptimizer):
                 self.I = np.zeros(len(self.leaf_set))
                 self._extend_search_space(self.leaf_set)
                 #self._expand_embedding()
-                self._update_mean_variances()
+                to_upd = np.concatenate([
+                    [self._get_node_idx(node) for node in self.leaf_set],
+                    [0]
+                ])
+                self._update_mean_variances(idx_to_update=to_upd)
                 self._compute_index()
                 return self.leaf_set
         raise Exception("Initialization not completed! You should increase budget!")
@@ -190,8 +205,8 @@ class AdaBBKB(AbsOptimizer):
         for i in lfset_indices:
             node = self.leaf_set[i]
             self.I[i] = np.min([
-                            self.means[self.node2idx[tuple(node.x)]] + np.sqrt(self.variances[self.node2idx[tuple(node.x)]]),
-                            self.means[self.node2idx[tuple(node.father.x)]] + np.sqrt(self.variances[self.node2idx[tuple(node.father.x)]]) + self._compute_V(node.father.level) 
+                            self.means[self.node2idx[tuple(node.x)]] + self.beta * np.sqrt(self.variances[self.node2idx[tuple(node.x)]]),
+                            self.means[self.node2idx[tuple(node.father.x)]] + self.beta * np.sqrt(self.variances[self.node2idx[tuple(node.father.x)]]) + self._compute_V(node.father.level) 
                         ]) + self._compute_V(node.level)
 
     def _can_be_expanded(self, node_idx, h, Vh):

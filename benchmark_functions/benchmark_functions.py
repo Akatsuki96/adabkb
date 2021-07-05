@@ -247,3 +247,26 @@ class Hartmann6(BenchmarkFunction):
             inner = np.exp(-inner)
             f += alpha[i] * inner
         return self.add_noise(-f)
+
+
+class Levy(BenchmarkFunction):
+
+    def __init__(self, d:int = 2, noise_params : Tuple = (0.0, None)):
+        self.d = d
+        minimizer = np.array([1 for i in range(self.d)])
+        global_min = (minimizer, 0.0)
+        search_space = np.array([[-10.0, 10.0] for _ in range(self.d)]).reshape(-1,2)
+        super().__init__("Levy %d" % self.d, search_space,global_min, noise_params=noise_params)
+
+    def __call__(self, x):
+        w = []
+        for i in range(x.shape[0]):
+            w.append(1 + (x[i] - 1)/4)
+        
+        t1 = np.sin(np.pi * w[0])**2
+        t2 = ((w[x.shape[0]-1] - 1)**2) * (1 + (np.sin(2 * np.pi * w[x.shape[0] - 1])**2 )) 
+        summation = 0
+        for i in range(self.d - 1):
+            new = ((w[i] - 1)**2) * (1 + 10*(np.sin(np.pi * w[i] + 1))**2)
+            summation += new
+        return self.add_noise(t1 + summation + t2)

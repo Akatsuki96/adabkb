@@ -77,6 +77,9 @@ class AbsOptimizer:
         return self.options.verbose
 
 
+    def _get_node_idx(self, node):
+        return self.node2idx[tuple(node.x)]
+
     def _compute_V(self, h):
         """Given a level \\(h \\geq 0\\), it compute \\(V_h\\) s.t. \\(\\forall i\\)
         \\[\\sup\\limits_{x, x^{\\prime} \\in X_{h,i}} |f(x) - f(x^\\prime)| \\leq V_h\\]
