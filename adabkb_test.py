@@ -1,6 +1,6 @@
 import unittest as ut
 
-from test_cases.adabkb_test_cases import AdaBKBTestCase, AdaBBKBTestCase, AdaBBKBWPTestCase, AdaBBKBWP_2TestCase
+from test_cases.adabkb_test_cases import AdaBKBTestCase, AdaBBKBTestCase, AdaBBKBWPTestCase, AdaBBKBWP_2TestCase, SafeAdaBKB_TestCase
 
 function_test = [
     'branin_test_case',
@@ -48,6 +48,12 @@ def adabbkbwp2_test_suite():
     suite.addTest(AdaBBKBWP_2TestCase('temp_test'))
     #suite.addTest(AdaBBKBWP_2TestCase('temp_test_no_hmax'))
     return suite
+
+def safeadabkb_test_suite():
+    suite = ut.TestSuite()
+    suite.addTest(SafeAdaBKB_TestCase('temp_test'))
+    return suite
+
 
 if __name__ == "__main__":
     runner = ut.TextTestRunner()

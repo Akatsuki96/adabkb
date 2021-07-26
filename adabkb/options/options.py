@@ -29,6 +29,8 @@ class OptimizerOptions:
         norm of the function \\(f\\) in RKHS. If it is unknown it is set to be 1.
     qbar : float
         oversampling parameter. It must be > 0.
+    jmin: float
+        safety threshold. It must be not None if SafeAdaBKB is used.    
     """
 
     def __init__(self, expand_fun,\
@@ -41,7 +43,7 @@ class OptimizerOptions:
          fnorm:float=1.,\
          qbar:int = 1,\
          seed:int=42,\
-         early_stopping=None,\
+         jmin=None,\
          verbose : bool = False):
         self.expand_fun = expand_fun
         self.lam = lam
@@ -54,7 +56,7 @@ class OptimizerOptions:
         self.noise_var = noise_var
         self.delta = delta
         self.random_state = np.random.RandomState(seed)
-        self.early_stopping = early_stopping
+        self.jmin = jmin
 
     def __str__(self):
         return """

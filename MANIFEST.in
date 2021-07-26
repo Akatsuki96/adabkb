@@ -10,3 +10,4 @@ global-exclude doc/_build/**
 global-exclude __pycache__
 global-exclude benchmark_functions/**
 global-exclude test_cases/**
+global-exclude notebooks/**

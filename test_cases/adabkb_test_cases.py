@@ -3,9 +3,9 @@ import numpy as np
 
 import time
 
-from adabbkb.options import  OptimizerOptions
-from adabbkb.utils import GreedyExpansion
-from adabbkb.optimizer import AdaBKB, AdaBBKB, AdaBBKBWP, AdaBBKBWP_2
+from adabkb.options import  OptimizerOptions
+from adabkb.utils import GreedyExpansion
+from adabkb.optimizer import AdaBKB, AdaBBKB, AdaBBKBWP, AdaBBKBWP_2
 
 from sklearn.gaussian_process.kernels import RBF
 

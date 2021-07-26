@@ -1,16 +1,16 @@
 from scipy.linalg import solve_triangular, svd, qr, qr_update, LinAlgError
 import numpy as np
-from adabbkb.options import OptimizerOptions
+from adabkb.options import OptimizerOptions
 
 from sklearn.gaussian_process.kernels import Kernel
 
-from adabbkb.utils import GreedyExpansion, diagonal_dot, stable_invert_root, PartitionTreeNode
+from adabkb.utils import GreedyExpansion, diagonal_dot, stable_invert_root, PartitionTreeNode
 
 from pytictoc import TicToc
 import itertools as it
 import time
 
-from adabbkb.optimizer import AbsOptimizer
+from adabkb.optimizer import AbsOptimizer
 
 class AdaBBKBWP(AbsOptimizer):
     def __init__(self, dot_fun: Kernel, ratio_threshold : float = 2.0, options: OptimizerOptions = None):

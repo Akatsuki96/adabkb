@@ -1,9 +1,9 @@
 import numpy as np
-from adabbkb.options import OptimizerOptions
+from adabkb.options import OptimizerOptions
 
 from sklearn.gaussian_process.kernels import Kernel
 
-from adabbkb.utils import diagonal_dot
+from adabkb.utils import diagonal_dot
 
 
 class AbsOptimizer:
