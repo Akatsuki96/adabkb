@@ -172,6 +172,9 @@ class AdaBKB(AbsOptimizer):
                 print("[--] mu[root] : {}\t beta*sigma[root]: {}\t V_0: {}\n".format(self.means[0], self.beta*np.sqrt(self.variances[0]), Vh_root))
             root_std = np.sqrt(self.variances[0]) 
             if self.beta * root_std <= Vh_root:
+                avgrew = self.Y[0] / self.pulled_arms_count[0]
+                self.best_lcb = (root.x, self.means[0] - self.beta*np.sqrt(self.variances[0]))
+                self.current_best = (root, avgrew)
                 self.leaf_set = root.expand_node()
                 self.I = np.zeros(len(self.leaf_set))
                 self._extend_search_space(self.leaf_set)
@@ -208,6 +211,12 @@ class AdaBKB(AbsOptimizer):
         while True:
             leaf_idx, Vh = self._select_node()
             node_idx =self.node2idx[tuple(self.leaf_set[leaf_idx].x)]
+            if np.sqrt(self.variances[node_idx]) * self.beta <= Vh and self.pulled_arms_count[node_idx] > 0:
+                lcb = self.means[node_idx] - self.beta * np.sqrt(self.variances[node_idx])
+                avg_rew = self.Y[node_idx] / self.pulled_arms_count[node_idx]
+                if avg_rew > self.current_best[1] or self.leaf_set[leaf_idx] == self.current_best[0]:
+                    self.best_lcb = (self.leaf_set[leaf_idx].x, lcb)
+                    self.current_best = (self.leaf_set[leaf_idx], avg_rew)
             if self._can_be_expanded(node_idx, self.leaf_set[leaf_idx].level, Vh ):
                 new_nodes = self.leaf_set[leaf_idx].expand_node()
                 self.leaf_set = np.delete(self.leaf_set, leaf_idx, 0)

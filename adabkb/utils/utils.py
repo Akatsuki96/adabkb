@@ -1,9 +1,6 @@
 import numpy as np
 from sklearn.gaussian_process.kernels import Kernel
 
-import matplotlib.pyplot as plt
-
-
 def flatten_list(lst):
     result = []
     for x in lst:

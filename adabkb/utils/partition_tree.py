@@ -57,4 +57,7 @@ class PartitionTreeNode:
     def __repr__(self):
         return "({}, N = {}, level: {})".format(self.partition, self.N, self.level)
 
-
+    def __eq__(self, other_node):
+        if isinstance(other_node, PartitionTreeNode):
+            return np.all(self.partition == other_node.partition)
+        return False

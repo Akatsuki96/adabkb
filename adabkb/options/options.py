@@ -1,5 +1,5 @@
 import numpy as np
-
+from adabkb.utils import ExpansionProcedure, GreedyExpansion
 
 class OptimizerOptions:
     """Options of the optimizer.
@@ -33,8 +33,9 @@ class OptimizerOptions:
         safety threshold. It must be not None if SafeAdaBKB is used.    
     """
 
-    def __init__(self, expand_fun,\
+    def __init__(self,
          gfun,\
+         expand_fun : ExpansionProcedure = GreedyExpansion(), 
          v_1 : float = 1.0,\
          rho : float = 0.5,\
          lam:float = 1e-5,\
