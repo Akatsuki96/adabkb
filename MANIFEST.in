@@ -11,3 +11,4 @@ global-exclude __pycache__
 global-exclude benchmark_functions/**
 global-exclude test_cases/**
 global-exclude notebooks/**
+global-exclude notes/**

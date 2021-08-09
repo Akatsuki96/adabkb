@@ -170,7 +170,7 @@ class AdaBKB(AbsOptimizer):
             self._update_model([0], [yt], init_phase=True)
             if self.verbose:
                 print("[--] mu[root] : {}\t beta*sigma[root]: {}\t V_0: {}\n".format(self.means[0], self.beta*np.sqrt(self.variances[0]), Vh_root))
-            root_std = np.sqrt(self.variances[0]) 
+            root_std = np.sqrt(self.variances[0])
             if self.beta * root_std <= Vh_root:
                 avgrew = self.Y[0] / self.pulled_arms_count[0]
                 self.best_lcb = (root.x, self.means[0] - self.beta*np.sqrt(self.variances[0]))

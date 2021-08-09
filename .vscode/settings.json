@@ -1,5 +1,6 @@
 {
     "python.linting.pylintEnabled": true,
     "python.pythonPath": "/home/akatsuki/mlenv/bin/python3",
-    "python.linting.enabled": true
+    "python.linting.enabled": true,
+    "jupyter.jupyterServerType": "local"
 }
