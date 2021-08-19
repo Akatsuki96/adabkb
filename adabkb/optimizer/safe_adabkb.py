@@ -102,47 +102,41 @@ class SafeAdaBKB(AdaBKB):
         lcb = (self.means[node_idx] - np.sqrt(self.variances[node_idx]) * self.beta)
         return lcb < self.j_min
 
+    def _update_best(self, node_idx, leaf_idx, Vh):
+        if self._centroid_accurate(node_idx, Vh) and self.pulled_arms_count[node_idx] > 0:
+            lcb = self.means[node_idx] - self.beta * np.sqrt(self.variances[node_idx])
+            avg_rew = self.Y[node_idx] / self.pulled_arms_count[node_idx]
+            if avg_rew > self.current_best[1] or self.leaf_set[leaf_idx] == self.current_best[0]:
+                self.best_lcb = (self.leaf_set[leaf_idx].x, lcb)
+                self.current_best = (self.leaf_set[leaf_idx], avg_rew)
+
     def step(self):
         while True:
             leaf_idx, Vh = self._select_node()
             node_idx =self.node2idx[tuple(self.leaf_set[leaf_idx].x)]
-            if self._centroid_accurate(node_idx, Vh) and self.pulled_arms_count[node_idx] > 0:
-                lcb = self.means[node_idx] - self.beta * np.sqrt(self.variances[node_idx])
-                avg_rew = self.Y[node_idx] / self.pulled_arms_count[node_idx]
-                if avg_rew > self.current_best[1] or self.leaf_set[leaf_idx] == self.current_best[0]:
-                    self.best_lcb = (self.leaf_set[leaf_idx].x, lcb)
-                    self.current_best = (self.leaf_set[leaf_idx], avg_rew)
+            self._update_best(node_idx, leaf_idx, Vh)
             if (self._centroid_accurate(node_idx, Vh) or self._unsafe_centroid(node_idx, Vh)) and self.leaf_set[leaf_idx].level <= self.h_max: # and self.leaf_set[leaf_idx].level < self.h_max:
-                if self.verbose:
-                    print("[--] expanding: {}\th={}\tunsafe={}\tlcb:{}\tjmin:{}".format(
-                        self.leaf_set[leaf_idx].x, self.leaf_set[leaf_idx].level,\
-                        self._unsafe_centroid(node_idx, Vh), self.means[node_idx] - self.beta * np.sqrt(self.variances[node_idx]), self.j_min)
-                        )
-                new_nodes = self.leaf_set[leaf_idx].expand_node()
-                self.leaf_set = np.delete(self.leaf_set, leaf_idx, 0)
-                self.I = np.delete(self.I, leaf_idx, 0)            
-                self.leaf_set = np.concatenate([self.leaf_set, new_nodes])
-                self.I = np.concatenate([self.I, np.zeros(len(new_nodes))])
-                assert len(self.I) == len(self.leaf_set) 
-                new_x = np.array(self._extend_search_space(new_nodes)).reshape(-1, self.X.shape[1])
-                new_means = self._evaluate_model(new_x)
-                new_node_idx = [self.node2idx[tuple(x)] for x in new_x]
-                for i in range(len(new_means)):
-                    self.means[self.node2idx[tuple(new_x[i])]] = new_means[i]
-                self._update_variances(new_node_idx)
-                self._compute_index(list(range(len(self.leaf_set) - len(new_nodes), len(self.leaf_set))))
-           #     self._remove_unsafe_partitions_()
+                self._expand(leaf_idx, node_idx)
                 self._evaluable_centroid_()
-            elif  self._unsafe_centroid(node_idx, Vh): #self._centroid_accurate(node_idx, Vh) and
-                dummy_y = self.means[node_idx] - self.beta*np.sqrt(self.variances[node_idx])
-                if self.verbose:
-                    print("[--] x: {}\tfake y: {}".format(self.leaf_set[leaf_idx].x, dummy_y))
-                self.update_model(node_idx, dummy_y)
-                self._evaluable_centroid_()
+            elif  self._unsafe_centroid(node_idx, Vh) and self.I[leaf_idx] >= self.j_min: #self._centroid_accurate(node_idx, Vh) and
+                print("[--] unsafe centroid on safe partition")
+                print("[--] h: {}\tVh: {}".format(self.leaf_set[leaf_idx].level, Vh))
+                #self.leaf_set = np.delete(self.leaf_set, leaf_idx, 0)
+                #self.I = np.delete(self.I, leaf_idx, 0)
+                print("[--] leaf set size: {}".format(len(self.leaf_set)))
+                self._expand(leaf_idx, node_idx)
+                print("[--] bef rem => leaf set size: {}".format(len(self.leaf_set)))
+                self._remove_unsafe_partitions_()
+                print("[--] after rem => leaf set size: {}".format(len(self.leaf_set)))
+                #    dummy_y = self.means[node_idx] - self.beta*np.sqrt(self.variances[node_idx]) - Vh
+            #    if self.verbose:
+            #        print("[--] x: {}\tfake y: {}".format(self.leaf_set[leaf_idx].x, dummy_y))
+            #    self.update_model(node_idx, dummy_y)
+            #    self._evaluable_centroid_()
             #elif self._unsafe_centroid(node_idx, Vh):
             #    self.leaf_set = np.delete(self.leaf_set, leaf_idx, 0)
             #    self.I = np.delete(self.I, leaf_idx, 0)  
-            #    self._evaluable_centroid_()          
+                self._evaluable_centroid_()          
             else:
                 print("[--] lcb: {}\t j_min: {}".format(self.means[node_idx] - self.beta * np.sqrt(self.variances[node_idx]), self.j_min))
                 return self.leaf_set[leaf_idx].x, node_idx
