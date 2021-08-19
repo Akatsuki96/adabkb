@@ -151,8 +151,7 @@ class AdaBKB(AbsOptimizer):
 
 
 
-    def initialize(self, target_fun, search_space, N : int = 2, budget : int = 1000, h_max : int = 100):
-        assert budget > 0
+    def initialize(self, search_space, N : int = 2, h_max : int = 100):
         root = PartitionTreeNode(search_space, N, None, expansion_procedure=self.expand_fun)
         self._init_maps(root.x, search_space.shape[0])
         self.h_max = h_max
