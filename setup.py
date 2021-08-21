@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="adabkb",
-    version="0.0.2",
+    version="0.1.0",
     description="Ada-BKB: Adaptive Budgeted Kernelized Bandit",
     python_requires='~=3.6',
     setup_requires=[
