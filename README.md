@@ -1,2 +1,2 @@
-# Ada-BBKB: Adaptive Batch Budgeted Kernelized Bandit
-Implementation of Ada-BKB, Ada-BBKB and other stuff. 
+# Ada-BKB: Adaptive Budgeted Kernelized Bandit
+Implementation of Ada-BKB.
