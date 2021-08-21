@@ -23,32 +23,6 @@ def adabkb_test_suite():
     return suite
 
 
-def adabbkb_test_suite():
-    suite = ut.TestSuite()
-    suite.addTest(AdaBBKBTestCase('temp_test'))
-    suite.addTest(AdaBBKBTestCase('branin_test_case'))
-    suite.addTest(AdaBBKBTestCase('six_hump_camel_test_case'))
-    suite.addTest(AdaBBKBTestCase('hartmann_3_test_case'))
-    suite.addTest(AdaBBKBTestCase('hartmann6_test_case'))
-    return suite
-
-
-def adabbkbwp_test_suite():
-    suite = ut.TestSuite()
-    #suite.addTest(AdaBBKBWPTestCase('temp_test'))
-    #suite.addTest(AdaBBKBWPTestCase('branin_test_case'))
-    suite.addTest(AdaBBKBWPTestCase('hartmann_3_test_case'))
-   # suite.addTest(AdaBBKBWPTestCase('hartmann_6_test_case'))
-   # suite.addTest(AdaBBKBWPTestCase('levy_8_test_case'))
-    return suite
-
-
-def adabbkbwp2_test_suite():
-    suite = ut.TestSuite()
-    suite.addTest(AdaBBKBWP_2TestCase('temp_test'))
-    #suite.addTest(AdaBBKBWP_2TestCase('temp_test_no_hmax'))
-    return suite
-
 def safeadabkb_test_suite():
     suite = ut.TestSuite()
     suite.addTest(SafeAdaBKB_TestCase('temp_test'))
@@ -58,7 +32,4 @@ def safeadabkb_test_suite():
 if __name__ == "__main__":
     runner = ut.TextTestRunner()
     #runner.run(adabkb_test_suite())
-    #runner.run(adabbkb_test_suite())
-    runner.run(adabbkbwp_test_suite())
-    runner.run(adabbkbwp2_test_suite())
     

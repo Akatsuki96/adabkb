@@ -126,6 +126,14 @@ class AdaBKB(AbsOptimizer):
         self.active_set = self.X[self.dict_arms_count != 0, :]
         self.m = self.active_set.shape[0]
     
+    def _add_new_node(self, new_x):
+        self.node2idx[tuple(new_x)] = self.num_nodes
+        self.num_nodes += 1
+        self.means = np.append(self.means, 0)
+        self.variances = np.append(self.variances, 0)
+        self.pulled_arms_count = np.append(self.pulled_arms_count, 0)
+        self.Y = np.append(self.Y, 0).reshape(-1)
+        self.X = np.append(self.X, new_x).reshape(-1,self.d)
 
     def _extend_search_space(self, leaf_set, first_expansion = False):
         extended = False
@@ -133,20 +141,14 @@ class AdaBKB(AbsOptimizer):
         for node in leaf_set:
             if tuple(node.x) not in self.node2idx:
                 new_x.append(node.x)
-                self.node2idx[tuple(node.x)] = self.num_nodes
-                self.num_nodes += 1
-                self.means = np.append(self.means, 0)
-                self.variances = np.append(self.variances, 0)
-                self.pulled_arms_count = np.append(self.pulled_arms_count, 0)
-                self.Y = np.append(self.Y, 0).reshape(-1)
-                self.X = np.append(self.X, node.x).reshape(-1,self.d)
+                self._add_new_node(node.x)
                 extended = True
         if extended:
             self.X_norms = diagonal_dot(self.X, self.dot)
             if first_expansion:
                 self._update_embedding()
             else:
-                self._expand_embedding() #only_extend=True)
+                self._expand_embedding()
         return new_x
 
 
@@ -158,34 +160,9 @@ class AdaBKB(AbsOptimizer):
         self.leaf_set = [root]
         self.I = np.zeros(len(self.leaf_set))
         self.current_best = None
-        #ne = 0 # number of function evaluation performed
-        #Vh_root = self._compute_V(0)
-        #t = TicToc()
-        #t.tic()
-        #while ne < budget:
-        #    yt = target_fun(root.x)
-        #    if self.verbose:
-        #        t.toc('[--] f(x_root) evaluated [n. %d] in' % ne)
-        #    ne += 1
-        #    self._update_model([0], [yt], init_phase=True)
-        #    if self.verbose:
-        #        print("[--] mu[root] : {}\t beta*sigma[root]: {}\t V_0: {}\n".format(self.means[0], self.beta*np.sqrt(self.variances[0]), Vh_root))
-        #    root_std = np.sqrt(self.variances[0])
-        #    if self.beta * root_std <= Vh_root:
-        #        avgrew = self.Y[0] / self.pulled_arms_count[0]
-        #        self.best_lcb = (root.x, self.means[0] - self.beta*np.sqrt(self.variances[0]))
-        #        self.current_best = (root, avgrew)
-        #        self.leaf_set = root.expand_node()
-        #        self.I = np.zeros(len(self.leaf_set))
-        #        self._extend_search_space(self.leaf_set)
-        #        to_upd = np.concatenate([
-        #            [self._get_node_idx(node) for node in self.leaf_set],
-        #            [0]
-        #        ])
-        #        self._update_mean_variances(to_upd)
-        #        self._compute_index()
-        #        return self.leaf_set
-        #raise Exception("Initialization not completed! You should increase budget!")
+        self.best_lcb = None
+ 
+
 
     def _compute_index(self, lfset_indices = None):
         if lfset_indices is None:
@@ -193,9 +170,10 @@ class AdaBKB(AbsOptimizer):
 
         for i in lfset_indices:
             node = self.leaf_set[i]
+            node_idx = self._get_node_idx(node)
             self.I[i] = np.min([
-                            self.means[self.node2idx[tuple(node.x)]] + self.beta * np.sqrt(self.variances[self.node2idx[tuple(node.x)]]),
-                            self.means[self.node2idx[tuple(node.father.x)]] + self.beta * np.sqrt(self.variances[self.node2idx[tuple(node.father.x)]]) + self._compute_V(node.father.level) 
+                            self.means[node_idx] + self.beta * np.sqrt(self.variances[node_idx]),
+                            self.means[node_idx] + self.beta * np.sqrt(self.variances[node_idx]) + self._compute_V(node.father.level) 
                         ]) + self._compute_V(node.level)
 
     def _select_node(self):
@@ -224,6 +202,7 @@ class AdaBKB(AbsOptimizer):
         else:
             new_means = self._evaluate_model(new_x)
             new_node_idx = [self.node2idx[tuple(x)] for x in new_x]
+           # self.means[new_node_idx] = new_means
             for i in range(len(new_means)):
                 self.means[self.node2idx[tuple(new_x[i])]] = new_means[i]
             self._update_variances(new_node_idx)
@@ -240,7 +219,7 @@ class AdaBKB(AbsOptimizer):
     def step(self):
         while True:
             leaf_idx, Vh = self._select_node()
-            node_idx =self.node2idx[tuple(self.leaf_set[leaf_idx].x)]
+            node_idx = self._get_node_idx(self.leaf_set[leaf_idx]) 
             self._update_best(node_idx, leaf_idx, Vh)
             if self._can_be_expanded(node_idx, self.leaf_set[leaf_idx].level, Vh ):
                 self._expand(leaf_idx, node_idx, len(self.leaf_set) == 1)
