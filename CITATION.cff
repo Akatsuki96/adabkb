@@ -1,7 +1,7 @@
 cff-version: 1.0.0
 message: "If you use this library, please cite it as below."
 authors:
-- family-names: "Rando,"
+- family-names: "Rando"
   given-names: "Marco"
 - family-names: "Carratino"
   given-names: "Luigi"
@@ -13,3 +13,10 @@ title: "Ada-BKB: Scalable Gaussian Process Optimization on Continuous Domain by 
 version: 1.0.0
 date-released: 2021-06-16
 url: "https://arxiv.org/abs/2106.08598"
+@misc{Rando_AdaBKB_Scalable_Gaussian_2021,
+author = {Rando,, Marco and Carratino, Luigi and Villa, Silvia and Rosasco, Lorenzo},
+month = {6},
+title = {{Ada-BKB: Scalable Gaussian Process Optimization on Continuous Domain by Adaptive Discretization}},
+url = {https://arxiv.org/abs/2106.08598},
+year = {2021}
+}
