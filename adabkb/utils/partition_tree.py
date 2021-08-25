@@ -35,10 +35,11 @@ class PartitionTreeNode:
         self.level = level
         self.children = []
         self.expand_fun = expansion_procedure
+        self.x = self.partition.mean(axis=1)
 
-    @property
-    def x(self):
-        return self.partition.mean(axis=1)
+#    @property
+#    def x(self):
+#        return self.partition.mean(axis=1)
 
     def expand_node(self):
         """function which creates and add children to the tree.

@@ -7,6 +7,21 @@ class ExpansionProcedure:
     def __call__(self, node):
         pass
 
+class SplitOnRepresenter(ExpansionProcedure):
+
+    def __call__(self, node):
+        children = []
+        print("[--] Node: ",node)
+        for id in range(node.partition.shape[0]):
+            max_len = float(np.abs(node.partition[:, 1][id] - node.partition[:, 0][id])/2) 
+            for i in range(2):
+                new_partition = node.partition.copy()
+                lb = new_partition[:, 0]
+                ub = new_partition[:, 1]
+                lb[id] = float(node.partition[:, 0][id] + max_len * float(i))
+                ub[id] = float(node.partition[:, 0][id] + max_len * float(i + 1))
+                children.append((new_partition, node.index*2 + i ))
+        return children
 
 
 class GreedyExpansion(ExpansionProcedure):
@@ -34,6 +49,7 @@ class GreedyExpansion(ExpansionProcedure):
         if self.random_dim:
             return self.random_state.choice(range(0, node.partition.shape[0]), 1)
         return np.argmax(side_lengths)
+
 
     def _standard_split(self, id, node):
         max_len = float(np.abs(node.partition[:, 1][id] - node.partition[:, 0][id])/node.N) 
