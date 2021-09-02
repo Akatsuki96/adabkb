@@ -12,3 +12,4 @@ global-exclude benchmark_functions/**
 global-exclude test_cases/**
 global-exclude notebooks/**
 global-exclude notes/**
+global-exclude papers_experiment/**
