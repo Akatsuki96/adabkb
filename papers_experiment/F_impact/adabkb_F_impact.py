@@ -1,7 +1,7 @@
 from sklearn.gaussian_process.kernels import RBF
 from adabkb import AdaBKB
 from adabkb.options import OptimizerOptions
-from benchmark_functions import Branin, Ackley, Hartmann3, Hartmann6, Levy
+from benchmark_functions import Branin, Ackley, Hartmann3, Hartmann6, Levy, Shekel
 from numpy.random import RandomState
 
 import time
@@ -21,32 +21,34 @@ def plot_comparison(title, xlabel, ylabel, adabkb, fname, legend_loc, yscale=Non
     if yscale is not None:
         ax.set_yscale(yscale)
     for (lab, data) in adabkb:
-        print(data)
         ax.plot(range(data.shape[0]), data, '-', label=lab)
     ax.legend(loc=legend_loc)
     plt.savefig(fname)
     plt.close(fig)
 
 def plot_regrets(adabkb_regret, fun_name, path):
-    plot_comparison("{}: average regret".format(fun_name), "$t$", "average regret", adabkb_regret, path + "/avg_regret.png", "upper right", yscale="log")
+    plot_comparison("{}: average regret".format(fun_name.replace("_"," ")), "$t$", "average regret", adabkb_regret, path + "/avg_regret.png", "upper right", yscale="log")
 
 def plot_ctime(adabkb_ctime, fun_name, path):
-    plot_comparison("{}: cumulative time".format(fun_name), "$t$", "time(s)", adabkb_ctime, path + "/ctime.png", "upper left")
+    plot_comparison("{}: cumulative time".format(fun_name.replace("_"," ")), "$t$", "time(s)", adabkb_ctime, path + "/ctime.png", "upper left")
 
 
 rnd_state = RandomState(42)
-lam = 0.01
+lam = 1e-9
 d = 2
-sigma = 2.0
+sigma = 5.10
 noise_var = lam**2
 N = 2
 qbar = 2.0
 delta = 1e-5
-#Branin((lam, rnd_state)) 
-fun = Hartmann3((lam, rnd_state)) #Ackley(d, (lam, rnd_state))#Levy(d, (lam, rnd_state)) 
+fun = Hartmann6((lam, rnd_state))
+# Branin((lam, rnd_state)) 
+# Ackley(d, (lam, rnd_state))
+# Levy(d, (lam, rnd_state))
+# Rosenbrock(d, (lam, rnd_state))
 main_path = "./out/{}".format(fun.name)
 T = 700
-hmax = 10
+hmax = 20
 os.makedirs(main_path, exist_ok=True)
 with open(main_path + "/experiment_info.log", "w") as f:
     f.write("[++] function: {}\n".format(fun.name))
@@ -63,8 +65,8 @@ with open(main_path + "/experiment_info.log", "w") as f:
 
 def execute_adabkb(fun, F):
     gfun = lambda x : (1/sigma) * x 
-    v_1 = N * np.sqrt(2)#fun.search_space.shape[0])
-    rho = N**(- 1/2) 
+    v_1 = N * np.sqrt(d)#fun.search_space.shape[0])
+    rho = N**(- 1/d) 
     #os.makedirs(main_path + "/adabkb", exist_ok=True)
     options = OptimizerOptions(gfun, v_1 = v_1, rho = rho, lam = lam, noise_var=noise_var,\
         delta=delta, fnorm=F, qbar=qbar, seed=42)
@@ -108,5 +110,6 @@ for fnorm in F:
     ctimes.append(("$F={}$".format(fnorm), tm))
     regs.append(("$F={}$".format(fnorm), r))
     
+print(regs)
 plot_regrets(regs, fun.name, main_path)
 plot_ctime(ctimes, fun.name, main_path)
