@@ -226,7 +226,7 @@ class Hartmann6(BenchmarkFunction):
         minimizer = np.array([0.20169, 0.150011, 0.476874, 0.275332, 0.311652, 0.6573])
         global_min = (minimizer, -3.32237)
         search_space = np.array([[0., 1.] for _ in range(6)])
-        super().__init__("Hartmann 6",search_space, global_min, noise_params= noise_params)
+        super().__init__("Hartmann_6",search_space, global_min, noise_params= noise_params)
 
     def __call__(self, x):
         alpha = np.array([1.0, 1.2, 3.0, 3.2])
@@ -256,7 +256,7 @@ class Levy(BenchmarkFunction):
         minimizer = np.array([1 for i in range(self.d)])
         global_min = (minimizer, 0.0)
         search_space = np.array([[-10.0, 10.0] for _ in range(self.d)]).reshape(-1,2)
-        super().__init__("Levy %d" % self.d, search_space,global_min, noise_params=noise_params)
+        super().__init__("Levy_%d" % self.d, search_space,global_min, noise_params=noise_params)
 
     def __call__(self, x):
         w = []

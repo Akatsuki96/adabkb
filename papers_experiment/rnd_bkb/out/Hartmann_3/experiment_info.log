@@ -1,0 +1,13 @@
+[++] function: Hartmann_3
+	[--] d: 3
+	[--] minimizers: [[0.114614, 0.555649, 0.852547]]
+	[--] minimum: -3.86278
+	[--] search space: [[0. 1.]
+ [0. 1.]
+ [0. 1.]]
+[++] parameters
+	[--] sigma: 2.0
+	[--] lambda: 0.01 (variance: 0.0001)
+	[--] |f|: 1.0	qbar: 2.0
+	[--] delta: 1e-05
+	[--] T: 700	hmax: 50
