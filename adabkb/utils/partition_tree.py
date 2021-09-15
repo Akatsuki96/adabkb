@@ -37,9 +37,17 @@ class PartitionTreeNode:
         self.expand_fun = expansion_procedure
         self.x = self.partition.mean(axis=1)
 
-#    @property
-#    def x(self):
-#        return self.partition.mean(axis=1)
+
+    def adapt(self, x):
+        adapted = False
+        for i in range(self.partition.shape[0]):
+            if self.partition[i][0] > x[i]:
+                x[i] = self.partition[i][0]
+                adapted = True
+            elif self.partition[i][1] < x[i]:
+                x[i] = self.partition[i][1]
+                adapted = True
+        return x, adapted
 
     def expand_node(self):
         """function which creates and add children to the tree.

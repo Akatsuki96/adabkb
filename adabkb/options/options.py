@@ -36,6 +36,7 @@ class OptimizerOptions:
          expand_fun : ExpansionProcedure = GreedyExpansion(), 
          v_1 : float = 1.0,\
          rho : float = 0.5,\
+         sigma: float = 1.0,\
          lam:float = 1e-5,\
          noise_var:float = 1.,\
          delta:float=0.5,\
@@ -47,6 +48,7 @@ class OptimizerOptions:
         self.lam = lam
         self.v_1 = v_1
         self.rho = rho
+        self.sigma = sigma
         self.verbose = verbose
         self.gfun = gfun
         self.fnorm = fnorm

@@ -3,26 +3,34 @@ import numpy as np
 class ExpansionProcedure:
     """Function which takes a node::PartitionNode and returns a set of node obtained by partitioning the cell associated to the node.
     """
-    
+    def _get_side_to_split(self, node):
+        side_lengths = np.abs(node.partition[:, 1] - node.partition[:, 0])
+        max_len = np.max(side_lengths)
+        return np.argmax(side_lengths)
+
+
     def __call__(self, node):
         pass
 
 class SplitOnRepresenter(ExpansionProcedure):
 
-    def __call__(self, node):
-        children = []
-        print("[--] Node: ",node)
-        for id in range(node.partition.shape[0]):
-            max_len = float(np.abs(node.partition[:, 1][id] - node.partition[:, 0][id])/2) 
-            for i in range(2):
-                new_partition = node.partition.copy()
-                lb = new_partition[:, 0]
-                ub = new_partition[:, 1]
-                lb[id] = float(node.partition[:, 0][id] + max_len * float(i))
-                ub[id] = float(node.partition[:, 0][id] + max_len * float(i + 1))
-                children.append((new_partition, node.index*2 + i ))
-        return children
+    def __call__(self, node): 
+        id = super()._get_side_to_split(node)
+        return self._split_(id, node)
 
+    def _split_(self, id, node):
+        pivots = [node.x, node.partition[:, 1]] #(M - m) * self.random_state.random(node.N) + m
+        children = []
+        last_lb = node.partition[:, 0][id]
+        for i in range(2):
+            new_partition = node.partition.copy()
+            lb = new_partition[:, 0]
+            ub = new_partition[:, 1]
+            lb[id] = last_lb
+            ub[id] = pivots[i][id]
+            children.append((new_partition, node.index*2 + i)) 
+            last_lb = ub[id]
+        return children
 
 class GreedyExpansion(ExpansionProcedure):
 

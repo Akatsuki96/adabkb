@@ -2,13 +2,15 @@ from scipy.linalg import solve_triangular, svd, qr, qr_update, LinAlgError
 import numpy as np
 from adabkb.options import OptimizerOptions
 
-from sklearn.gaussian_process.kernels import Kernel
+from sklearn.gaussian_process.kernels import Kernel, RBF
 
 from adabkb.utils import GreedyExpansion, diagonal_dot, stable_invert_root, PartitionTreeNode
 
 from pytictoc import TicToc
 import itertools as it
 import time
+
+from torch.optim import Adam
 
 from adabkb.optimizer import AbsOptimizer
 
@@ -22,6 +24,13 @@ class AdaBKB(AbsOptimizer):
     def embedding_size(self):
         return self.m
 
+    @property
+    def lam(self):
+        return self.options.lam
+
+    @property
+    def sigma(self):
+        return self.options.sigma
     
     def _evaluate_model(self, Xstar):
         K_sm = self.dot(Xstar, self.active_set)
@@ -79,7 +88,10 @@ class AdaBKB(AbsOptimizer):
         self.Q, self.R = qr(self.A)
 
         self.w = solve_triangular(self.R, self.Q.T.dot(pulled_arms_matrix.T.dot(self.Y[self.pulled_arms_count != 0])))
-        self.means[idx_to_update] = self.X_embedded[idx_to_update, :].dot(self.w)
+        if idx_to_update is None:
+            self.means = self.X_embedded.dot(self.w)
+        else:
+            self.means[idx_to_update] = self.X_embedded[idx_to_update, :].dot(self.w)
         assert np.all(np.isfinite(self.means))
 
         self._update_variances(idx_to_update)
@@ -111,6 +123,7 @@ class AdaBKB(AbsOptimizer):
             self._update_mean_variances(idx_to_update=to_upd)
         self._update_beta()
         if not init_phase:
+          #  self._update_bkb_params()
             self._compute_index()
         if self.verbose:
             tictoc.toc('[--] update completed in')
@@ -216,6 +229,43 @@ class AdaBKB(AbsOptimizer):
                 self.best_lcb = (self.leaf_set[leaf_idx].x, lcb)
                 self.current_best = (self.leaf_set[leaf_idx], avg_rew)
         
+    #def _update_bkb_params(self):
+    #    maxiter = 10
+    #    Pk = np.eye(2,2)
+    #    h_k = 1e-10
+    #    x = np.array([self.sigma, self.lam]).reshape(1, 2)
+    #    def mlik(x):
+    #        x = x.reshape(-1)
+    #        # x[0] = sigma  x[1] = lambda
+    #        self.dot = RBF(x[0]) if x[0] >= 0 else -x[0]
+    #        if x[1] > 0 and x[1] < 1:
+    #            self.options.lam = x[1]
+    #        elif x[1] < 0:
+    #            self.options.lam = 1e-9
+    #        else:
+    #            self.options.lam = 1.0  
+    #        self._update_mean_variances()
+    #        weighted_Y = self.pulled_arms_matrix.T.dot(self.Y[self.pulled_arms_count != 0])
+    #        comp_pen = -1/2 * np.linalg.slogdet(self.A)[1]
+    #        datafit = -1/2 * weighted_Y.dot(self.A.dot(weighted_Y.T))
+    #        reg = -self.pulled_arms_count.sum()/2 * np.log(2*np.pi)
+    #        return -(datafit + comp_pen + reg)
+    #    for i in range(1, maxiter):
+    #        ml_x = mlik(x)
+    #        gdir = 0
+    #        for j in range(2):
+    #            gdir += (( mlik(x + h_k * Pk[:, j]) - ml_x)/h_k) * Pk[:, j] 
+    #        gnorm = np.linalg.norm(gdir)**2
+    #        if gnorm <= 1e-7:
+    #            print("[--] |grad|^2: {}".format(gnorm))
+    #            break
+    #        x = x - (1/i) * gdir
+    #        print("[--] BKB PARAMS: {}".format(x))
+    #    x = x.reshape(-1)
+    #    self.options.sigma = x[0] if x[0] >= 0 else -x[0]
+    #    self.options.lam = x[1]  if x[1] >= 0 else -x[1]
+    #    self.dot = RBF(x[0]) if x[0] >= 0 else -x[0]
+
     def step(self):
         while True:
             leaf_idx, Vh = self._select_node()
