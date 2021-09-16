@@ -42,16 +42,18 @@ class GradBKB(AdaBKB):
 
 
     def explore_partition(self, node, leaf_idx, node_idx):
-        x = x0 = node.x
+        x = x0 = node.partition.mean(axis=1)
         k = 1
         while k < self.opt_budget:
             dirs = self.random_state.choice(range(self.d), size=self.l, replace=False) 
-            self.Pk = self.eye[dirs] 
+            self.Pk = self.eye[dirs].T
             
-            
+            #print(self.Pk)
             grad_app = 0
             mu_x, sigma_x = self.eval_ucb(x)
             ucb_x = mu_x + self.beta * sigma_x
+
+            #print("[--] f(x) = {}".format(ucb_x))
 
             for j in range(self.Pk.shape[1]):
                 mu_dir, sigma_dir = self.eval_ucb(x + self.fd_app * self.Pk[:, j])
@@ -61,9 +63,10 @@ class GradBKB(AdaBKB):
             if np.linalg.norm(grad_app) <= self.opt_tol:
                 break
             x, adapted = node.adapt(x + (1/np.sqrt(k)) * grad_app)
-            #if adapted:
-            #    break
+            if adapted:
+                break
             k+=1
+        #print("mu: {} sigma: {}".format(mu_x, sigma_x))
         node.x = x
         self.node2idx[tuple(x)] =  self.node2idx[tuple(x0)]
         self.means[node_idx] = mu_x
