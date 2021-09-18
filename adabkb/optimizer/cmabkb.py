@@ -13,13 +13,11 @@ class CMABKB(AdaBKB):
 
     def initialize(self, search_space, N, h_max : int = 100,\
          pop_size : int = 2,\
-         sigma0 : float = 1.0,\
          max_gen : int = 5,\
          cmaes_seed: int = 42):
         super().initialize(search_space, N, h_max)
         self.pop_size = pop_size
         self.max_gen = max_gen
-        self.sigma0 = sigma0
         self.cmaes_seed= cmaes_seed
         self.d = search_space.shape[0]
 
@@ -33,7 +31,7 @@ class CMABKB(AdaBKB):
         def target(x):
             mu, sigma = self.eval_ucb(x)
             return mu + self.beta * sigma
-        cmaes = CMAEvolutionStrategy(node.partition.mean(axis=1), self.sigma0, opts)
+        cmaes = CMAEvolutionStrategy(node.partition.mean(axis=1), self.v_1 * (self.rho**node.level), opts)
         result = cmaes.optimize(target).result
         xnew = result.xbest
         self.node2idx[tuple(node.x)] =  self.node2idx[tuple(xnew)]
