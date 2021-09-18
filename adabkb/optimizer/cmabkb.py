@@ -14,14 +14,12 @@ class CMABKB(AdaBKB):
     def initialize(self, search_space, N, h_max : int = 100,\
          pop_size : int = 2,\
          sigma0 : float = 1.0,\
-         max_gen : int = 100,\
-         cmaes_seed: int = 42,\
-         cma_maxiter: int = 5):
+         max_gen : int = 5,\
+         cmaes_seed: int = 42):
         super().initialize(search_space, N, h_max)
         self.pop_size = pop_size
         self.max_gen = max_gen
         self.sigma0 = sigma0
-        self.cma_maxiter = cma_maxiter
         self.cmaes_seed= cmaes_seed
         self.d = search_space.shape[0]
 
@@ -30,7 +28,7 @@ class CMABKB(AdaBKB):
             'seed' : self.cmaes_seed,
             'popsize' : self.pop_size,
             'bounds' : [node.partition[:,0], node.partition[:,1]],
-            'maxiter' : self.cma_maxiter
+            'maxiter' : self.max_gen
         }
         def target(x):
             mu, sigma = self.eval_ucb(x)
