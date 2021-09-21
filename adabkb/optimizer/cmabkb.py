@@ -13,11 +13,13 @@ class CMABKB(AdaBKB):
 
     def initialize(self, search_space, N, h_max : int = 100,\
          pop_size : int = 2,\
+         sigma0 : float = 1.0,\
          max_gen : int = 5,\
          cmaes_seed: int = 42):
         super().initialize(search_space, N, h_max)
         self.pop_size = pop_size
         self.max_gen = max_gen
+        self.sigma0 = sigma0
         self.cmaes_seed= cmaes_seed
         self.d = search_space.shape[0]
 
@@ -26,15 +28,23 @@ class CMABKB(AdaBKB):
             'seed' : self.cmaes_seed,
             'popsize' : self.pop_size,
             'bounds' : [node.partition[:,0], node.partition[:,1]],
-            'maxiter' : self.max_gen
+            'verb_disp' : 0
         }
-        def target(x):
-            mu, sigma = self.eval_ucb(x)
-            return mu + self.beta * sigma
-        cmaes = CMAEvolutionStrategy(node.partition.mean(axis=1), self.v_1 * (self.rho**node.level), opts)
-        result = cmaes.optimize(target).result
+        #def target(x):
+        #    mu, sigma = self.eval_ucb(x)
+        #    return -(mu + self.beta * sigma)
+        #
+        #
+        cmaes = CMAEvolutionStrategy(node.partition.mean(axis=1), self.sigma0, opts)
+        for t in range(self.max_gen):
+            xt = np.array(cmaes.ask()).reshape(-1,node.partition.shape[0])
+            mu, sigma = self.eval_ucb(xt)
+            yt = -(mu + self.beta * sigma)
+            cmaes.tell(xt, yt)
+        
+        result = cmaes.result
         xnew = result.xbest
-        self.node2idx[tuple(node.x)] =  self.node2idx[tuple(xnew)]
+        self.node2idx[tuple(xnew)] = self.node2idx[tuple(node.x)]
         node.x = result.xbest
         mu, sigma = self.eval_ucb(node.x)
         self.means[node_idx] = mu
@@ -56,7 +66,7 @@ class CMABKB(AdaBKB):
                         overwrite_b=True,
                         check_finite=False).T
         temp *= Xstar_embedded
-        norm = diagonal_dot(x.reshape(-1, self.Pk.shape[0]), self.dot)
+        norm = diagonal_dot(x.reshape(-1, self.d), self.dot)
         Xstar_norms_embedded = np.square(np.linalg.norm(Xstar_embedded, axis = 1))
         var = (
             (norm - Xstar_norms_embedded) / self.lam
