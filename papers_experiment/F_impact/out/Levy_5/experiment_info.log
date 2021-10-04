@@ -1,0 +1,15 @@
+[++] function: Levy_5
+	[--] d: 5
+	[--] minimizers: [1 1 1 1 1]
+	[--] minimum: 0.0
+	[--] search space: [[-10.  10.]
+ [-10.  10.]
+ [-10.  10.]
+ [-10.  10.]
+ [-10.  10.]]
+[++] parameters
+	[--] sigma: 1.1
+	[--] lambda: 1e-05 (variance: 1.0000000000000002e-10)
+	[--] qbar: 2.0
+	[--] delta: 1e-05
+	[--] T: 700	hmax: 10

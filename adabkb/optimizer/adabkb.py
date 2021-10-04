@@ -129,7 +129,8 @@ class AdaBKB(AbsOptimizer):
             tictoc.toc('[--] update completed in')
         
     def update_model(self, idx, yt):
-        self._update_model([idx], [yt], len(self.leaf_set) == 1)
+        self._update_model([idx], [yt], len(self.leaf_set) == 1 and self.cpruned == 0)
+        self._prune_leafset()
 
     def _resample_dict(self):
         resample_dict = self.random_state.rand(self.X.shape[0]) < (self.variances * self.pulled_arms_count * self.qbar)
@@ -171,8 +172,11 @@ class AdaBKB(AbsOptimizer):
         self._init_maps(root.x, search_space.shape[0])
         self.h_max = h_max
         self.leaf_set = [root]
+        self.cpruned = 0
+        self.pruned = 0
         self.I = np.zeros(len(self.leaf_set))
         self.current_best = None
+        self.estop = False
         self.best_lcb = None
  
 
@@ -193,6 +197,31 @@ class AdaBKB(AbsOptimizer):
         selected_idx = np.argmax(self.I)
         Vh = self._compute_V(self.leaf_set[selected_idx].level)
         return selected_idx, Vh
+
+    def _prune_leafset(self):
+        ucbs = np.array([self.means[self._get_node_idx(leaf)] + self.beta * np.sqrt(self.variances[self._get_node_idx(leaf)]) + self._compute_V(leaf.level) 
+        for leaf in self.leaf_set 
+        ])
+        #print("UCBS: ", ucbs)
+        #if self.best_lcb is not None:
+        #    print("best LCB: ", self.best_lcb[1]) 
+        lset_size = len(self.leaf_set)
+        to_rem = []
+        lset = []
+        for i in range(len(self.leaf_set)):
+            if self.best_lcb is None or ucbs[i] >= self.best_lcb[1] or np.all(self.best_lcb[0] == self.leaf_set[i].x):
+                lset.append(self.leaf_set[i])
+            else:
+                to_rem.append(i)
+       # print("[-] lset: {}".format(lset_size))
+        self.leaf_set = lset #self.leaf_set[self.best_lcb is None or ucbs >= self.best_lcb[1]]
+       # print("[-] lset: {}".format(len(self.leaf_set)))
+        self.pruned = (lset_size - len(self.leaf_set))
+        self.I = np.delete(self.I, to_rem, 0)
+        self.cpruned += len(to_rem) #(lset_size - len(self.leaf_set))
+        assert len(self.I) == len(self.leaf_set)
+        if len(self.leaf_set) == 0 or (len(self.leaf_set) == 1 and self.leaf_set[0].level == self.h_max):
+            self.estop = True
 
 
     def _can_be_expanded(self, node_idx, h, Vh):
@@ -273,5 +302,6 @@ class AdaBKB(AbsOptimizer):
             self._update_best(node_idx, leaf_idx, Vh)
             if self._can_be_expanded(node_idx, self.leaf_set[leaf_idx].level, Vh ):
                 self._expand(leaf_idx, node_idx, len(self.leaf_set) == 1)
+                self._prune_leafset()
             else:
                 return self.leaf_set[leaf_idx].x, node_idx

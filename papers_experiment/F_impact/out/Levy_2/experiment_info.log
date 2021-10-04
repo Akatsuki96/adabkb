@@ -1,0 +1,12 @@
+[++] function: Levy_2
+	[--] d: 2
+	[--] minimizers: [1 1]
+	[--] minimum: 0.0
+	[--] search space: [[-10.  10.]
+ [-10.  10.]]
+[++] parameters
+	[--] sigma: 3.0
+	[--] lambda: 0.01 (variance: 0.0001)
+	[--] qbar: 2.0
+	[--] delta: 1e-05
+	[--] T: 700	hmax: 10

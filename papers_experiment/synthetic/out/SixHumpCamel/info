@@ -1,0 +1,11 @@
+[--] trials: 5
+[--] T: 700
+[--] search space: [array([-3.,  3.]), array([-2.,  2.])]
+[++] BKB params
+	[--] sigma: 0.5
+	[--] lam: 0.001
+[++] Ada-BKB params
+	[--] sigma: 0.5
+	[--] lam: 0.001
+	[--] N: 5
+	[--] hmax: 6

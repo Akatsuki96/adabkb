@@ -4,4 +4,4 @@ sklearn
 pytictoc
 matplotlib
 seaborn
-cma
+gpytorch
