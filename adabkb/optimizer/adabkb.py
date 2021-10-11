@@ -10,8 +10,6 @@ from pytictoc import TicToc
 import itertools as it
 import time
 
-from torch.optim import Adam
-
 from adabkb.optimizer import AbsOptimizer
 
 class AdaBKB(AbsOptimizer):
@@ -35,8 +33,7 @@ class AdaBKB(AbsOptimizer):
     def _evaluate_model(self, Xstar):
         K_sm = self.dot(Xstar, self.active_set)
         Xstar_embedded = K_sm.dot(self.U_thin * self.S_thin_inv_sqrt.T)
-        evaluated_means = Xstar_embedded.dot(self.w)
-        return evaluated_means
+        return Xstar_embedded.dot(self.w)
 
     def _expand_embedding(self):
         self.K_km = self.dot(self.X, self.active_set)
@@ -116,10 +113,15 @@ class AdaBKB(AbsOptimizer):
         if init_phase:
             self._update_mean_variances(idx_to_update=[0])
         else:
-            to_upd = np.concatenate([
-                [self._get_node_idx(node) for node in self.leaf_set],
-                list(set([self._get_node_idx(node.father) for node in self.leaf_set]))
-            ])
+            to_upd = np.concatenate(
+                [
+                    [self._get_node_idx(node) for node in self.leaf_set],
+                    list(
+                        {self._get_node_idx(node.father) for node in self.leaf_set}
+                    ),
+                ]
+            )
+
             self._update_mean_variances(idx_to_update=to_upd)
         self._update_beta()
         if not init_phase:
@@ -220,7 +222,9 @@ class AdaBKB(AbsOptimizer):
         self.I = np.delete(self.I, to_rem, 0)
         self.cpruned += len(to_rem) #(lset_size - len(self.leaf_set))
         assert len(self.I) == len(self.leaf_set)
-        if len(self.leaf_set) == 0 or (len(self.leaf_set) == 1 and self.leaf_set[0].level == self.h_max):
+        if not self.leaf_set or (
+            len(self.leaf_set) == 1 and self.leaf_set[0].level == self.h_max
+        ):
             self.estop = True
 
 
@@ -257,51 +261,17 @@ class AdaBKB(AbsOptimizer):
             if self.current_best is None or avg_rew > self.current_best[1] or self.leaf_set[leaf_idx] == self.current_best[0]:
                 self.best_lcb = (self.leaf_set[leaf_idx].x, lcb)
                 self.current_best = (self.leaf_set[leaf_idx], avg_rew)
-        
-    #def _update_bkb_params(self):
-    #    maxiter = 10
-    #    Pk = np.eye(2,2)
-    #    h_k = 1e-10
-    #    x = np.array([self.sigma, self.lam]).reshape(1, 2)
-    #    def mlik(x):
-    #        x = x.reshape(-1)
-    #        # x[0] = sigma  x[1] = lambda
-    #        self.dot = RBF(x[0]) if x[0] >= 0 else -x[0]
-    #        if x[1] > 0 and x[1] < 1:
-    #            self.options.lam = x[1]
-    #        elif x[1] < 0:
-    #            self.options.lam = 1e-9
-    #        else:
-    #            self.options.lam = 1.0  
-    #        self._update_mean_variances()
-    #        weighted_Y = self.pulled_arms_matrix.T.dot(self.Y[self.pulled_arms_count != 0])
-    #        comp_pen = -1/2 * np.linalg.slogdet(self.A)[1]
-    #        datafit = -1/2 * weighted_Y.dot(self.A.dot(weighted_Y.T))
-    #        reg = -self.pulled_arms_count.sum()/2 * np.log(2*np.pi)
-    #        return -(datafit + comp_pen + reg)
-    #    for i in range(1, maxiter):
-    #        ml_x = mlik(x)
-    #        gdir = 0
-    #        for j in range(2):
-    #            gdir += (( mlik(x + h_k * Pk[:, j]) - ml_x)/h_k) * Pk[:, j] 
-    #        gnorm = np.linalg.norm(gdir)**2
-    #        if gnorm <= 1e-7:
-    #            print("[--] |grad|^2: {}".format(gnorm))
-    #            break
-    #        x = x - (1/i) * gdir
-    #        print("[--] BKB PARAMS: {}".format(x))
-    #    x = x.reshape(-1)
-    #    self.options.sigma = x[0] if x[0] >= 0 else -x[0]
-    #    self.options.lam = x[1]  if x[1] >= 0 else -x[1]
-    #    self.dot = RBF(x[0]) if x[0] >= 0 else -x[0]
+
 
     def step(self):
         while True:
             leaf_idx, Vh = self._select_node()
-            node_idx = self._get_node_idx(self.leaf_set[leaf_idx]) 
+            node_idx = self._get_node_idx(self.leaf_set[leaf_idx])
             self._update_best(node_idx, leaf_idx, Vh)
-            if self._can_be_expanded(node_idx, self.leaf_set[leaf_idx].level, Vh ):
-                self._expand(leaf_idx, node_idx, len(self.leaf_set) == 1)
-                self._prune_leafset()
-            else:
+            if not self._can_be_expanded(
+                node_idx, self.leaf_set[leaf_idx].level, Vh
+            ):
                 return self.leaf_set[leaf_idx].x, node_idx
+
+            self._expand(leaf_idx, node_idx, len(self.leaf_set) == 1 and self.cpruned == 0)
+            self._prune_leafset()

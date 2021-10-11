@@ -43,6 +43,7 @@ class OptimizerOptions:
          fnorm:float=1.,\
          qbar:int = 1,\
          seed:int=42,\
+         ratio_threshold: int = 2,\
          verbose : bool = False):
         self.expand_fun = expand_fun
         self.lam = lam
@@ -53,6 +54,7 @@ class OptimizerOptions:
         self.gfun = gfun
         self.fnorm = fnorm
         self.qbar = qbar
+        self.ratio_threshold = ratio_threshold
         self.noise_var = noise_var
         self.delta = delta
         self.random_state = np.random.RandomState(seed)
