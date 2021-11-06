@@ -32,28 +32,27 @@ class OptimizerOptions:
     """
 
     def __init__(self,
-         gfun,\
+         kernel,\
          expand_fun : ExpansionProcedure = GreedyExpansion(), 
          v_1 : float = 1.0,\
          rho : float = 0.5,\
          sigma: float = 1.0,\
          lam:float = 1e-5,\
-         noise_var:float = 1.,\
          delta:float=0.5,\
-         fnorm:float=1.,\
+         fnorm:float=1.0,\
          qbar:int = 1,\
          seed:int=42,\
          verbose : bool = False):
+        self.kernel = kernel
         self.expand_fun = expand_fun
         self.lam = lam
         self.v_1 = v_1
         self.rho = rho
         self.sigma = sigma
         self.verbose = verbose
-        self.gfun = gfun
         self.fnorm = fnorm
         self.qbar = qbar
-        self.noise_var = noise_var
+        self.noise_var = lam**2
         self.delta = delta
         self.random_state = np.random.RandomState(seed)
 

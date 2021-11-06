@@ -24,10 +24,6 @@ class AdaBKB(AbsOptimizer):
         return self.m
 
     @property
-    def lam(self):
-        return self.options.lam
-
-    @property
     def sigma(self):
         return self.options.sigma
     

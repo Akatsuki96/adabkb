@@ -7,8 +7,7 @@ from adabkb.utils import diagonal_dot
 
 
 class AbsOptimizer:
-    def __init__(self, dot_fun: Kernel, options: OptimizerOptions = None):
-        self.dot = dot_fun
+    def __init__(self, options: OptimizerOptions = None):
         self.options = options
         self.node2idx = {}
         self.father_ucbs = {}
@@ -65,12 +64,16 @@ class AbsOptimizer:
         return self.options.v_1
     
     @property
+    def dot(self):
+        return self.options.kernel
+
+    @property
     def rho(self):
         return self.options.rho
 
     @property
     def gfun(self):
-        return self.options.gfun
+        return self.options.kernel.confidence_function
 
     @property
     def verbose(self):

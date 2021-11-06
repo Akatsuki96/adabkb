@@ -8,11 +8,6 @@ from pytictoc import TicToc
 from adabkb.optimizer import AbsOptimizer
 
 class SafeAdaBKB(AbsOptimizer):
-
-    def __init__(self, dot_fun, jmin: float, options = None):
-        super().__init__(dot_fun, options=options)
-        self.jmin = jmin
-
     @property
     def pulled_arms_matrix(self):
         return self.X_embedded[self.pulled_arms_count != 0, :]
@@ -22,13 +17,13 @@ class SafeAdaBKB(AbsOptimizer):
         return self.m
 
     @property
-    def lam(self):
-        return self.options.lam
-
-    @property
     def sigma(self):
         return self.options.sigma
-    
+        
+    def __init__(self, jmin: float, options = None):
+        super().__init__(options=options)
+        self.jmin = jmin
+
     def _evaluate_model(self, Xstar):
         K_sm = self.dot(Xstar, self.active_set)
         Xstar_embedded = K_sm.dot(self.U_thin * self.S_thin_inv_sqrt.T)
@@ -120,13 +115,14 @@ class SafeAdaBKB(AbsOptimizer):
             self._update_mean_variances(idx_to_update=to_upd)
         self._update_beta()
         if not init_phase:
+          #  self._update_bkb_params()
             self._compute_index()
         if self.verbose:
             tictoc.toc('[--] update completed in')
         
     def update_model(self, idx, yt):
-        self._update_model([idx], [yt], len(self.leaf_set) == 1 and self.num_update == 0)
-        self.num_update += 1
+        self._update_model([idx], [yt], len(self.leaf_set) == 1 and self.cpruned == 0)
+        self._prune_leafset()
 
     def _resample_dict(self):
         resample_dict = self.random_state.rand(self.X.shape[0]) < (self.variances * self.pulled_arms_count * self.qbar)
@@ -142,8 +138,8 @@ class SafeAdaBKB(AbsOptimizer):
         self.means = np.append(self.means, 0)
         self.variances = np.append(self.variances, 0)
         self.pulled_arms_count = np.append(self.pulled_arms_count, 0)
-        self.X = np.append(self.X, new_x).reshape(-1,self.d)
         self.Y = np.append(self.Y, 0).reshape(-1)
+        self.X = np.append(self.X, new_x).reshape(-1,self.d)
 
     def _extend_search_space(self, leaf_set, first_expansion = False):
         extended = False
@@ -161,23 +157,22 @@ class SafeAdaBKB(AbsOptimizer):
                 self._expand_embedding()
         return new_x
 
+
+
     def initialize(self, search_space, N : int = 2, h_max : int = 100):
         root = PartitionTreeNode(search_space, N, None, expansion_procedure=self.expand_fun)
-        # root.x is safe
         self._init_maps(root.x, search_space.shape[0])
         self.h_max = h_max
-        self.leaf_set = [root] # Lt
-        self.safe_set = [0] # St : it contains indices of 'safe' leafs
-        self.num_update = 0
-        self.I = np.zeros(len(self.leaf_set)) # I 
-        self.l = np.zeros(len(self.leaf_set)) # lcb
+        self.leaf_set = [root]
+        self.cpruned = 0
+        self.pruned = 0
+        self.I = np.zeros(len(self.leaf_set))
         self.current_best = None
         self.estop = False
         self.best_lcb = None
-
-    def prune_unsafe(self):
-        return [i for i in range(len(self.leaf_set)) if self.l[i] >= self.jmin]
  
+
+
     def _compute_index(self, lfset_indices = None):
         if lfset_indices is None:
             lfset_indices = list(range(len(self.leaf_set)))
@@ -189,24 +184,45 @@ class SafeAdaBKB(AbsOptimizer):
                             self.means[node_idx] + self.beta * np.sqrt(self.variances[node_idx]),
                             self.means[node_idx] + self.beta * np.sqrt(self.variances[node_idx]) + self._compute_V(node.father.level) 
                         ]) + self._compute_V(node.level)
-            self.l[i] = self.means[node_idx] - self.beta * np.sqrt(self.variances[node_idx])
 
-    def _select_node(self, safe_leaf_idx):
-        selected_idx = safe_leaf_idx[np.argmax(self.I[safe_leaf_idx])]
+    def _select_node(self):
+        selected_idx = np.argmax(self.I)
         Vh = self._compute_V(self.leaf_set[selected_idx].level)
         return selected_idx, Vh
+
+    def _prune_leafset(self):
+        ucbs = np.array([self.means[self._get_node_idx(leaf)] + self.beta * np.sqrt(self.variances[self._get_node_idx(leaf)]) + self._compute_V(leaf.level) 
+        for leaf in self.leaf_set 
+        ])
+
+        lset_size = len(self.leaf_set)
+        to_rem = []
+        lset = []
+        for i in range(len(self.leaf_set)):
+            if self.best_lcb is None or ucbs[i] >= self.best_lcb[1] or np.all(self.best_lcb[0] == self.leaf_set[i].x):
+                lset.append(self.leaf_set[i])
+            else:
+                to_rem.append(i)
+       # print("[-] lset: {}".format(lset_size))
+        self.leaf_set = lset #self.leaf_set[self.best_lcb is None or ucbs >= self.best_lcb[1]]
+       # print("[-] lset: {}".format(len(self.leaf_set)))
+        self.pruned = (lset_size - len(self.leaf_set))
+        self.I = np.delete(self.I, to_rem, 0)
+        self.cpruned += len(to_rem) #(lset_size - len(self.leaf_set))
+        assert len(self.I) == len(self.leaf_set)
+        if len(self.leaf_set) == 0 or (len(self.leaf_set) == 1 and self.leaf_set[0].level == self.h_max):
+            self.estop = True
+
 
     def _can_be_expanded(self, node_idx, h, Vh):
         return np.sqrt(self.variances[node_idx]) * self.beta <= Vh and h < self.h_max
 
-    def _expand(self, leaf_idx, first_expansion = False):
+    def _expand(self, leaf_idx, node_idx, first_expansion = False):
         new_nodes = self.leaf_set[leaf_idx].expand_node()
         self.leaf_set = np.delete(self.leaf_set, leaf_idx, 0)
         self.I = np.delete(self.I, leaf_idx, 0)
-        self.l = np.delete(self.l, leaf_idx, 0)
         self.leaf_set = np.concatenate([self.leaf_set, new_nodes])
         self.I = np.concatenate([self.I, np.zeros(len(new_nodes))])
-        self.l = np.concatenate([self.l, np.zeros(len(new_nodes))])
         assert len(self.I) == len(self.leaf_set) 
         new_x = np.array(self._extend_search_space(new_nodes, first_expansion)).reshape(-1, self.X.shape[1])
         if first_expansion:
@@ -218,6 +234,7 @@ class SafeAdaBKB(AbsOptimizer):
         else:
             new_means = self._evaluate_model(new_x)
             new_node_idx = [self.node2idx[tuple(x)] for x in new_x]
+           # self.means[new_node_idx] = new_means
             for i in range(len(new_means)):
                 self.means[self.node2idx[tuple(new_x[i])]] = new_means[i]
             self._update_variances(new_node_idx)
@@ -233,11 +250,11 @@ class SafeAdaBKB(AbsOptimizer):
 
     def step(self):
         while True:
-            safe_leaf_indices = self.prune_unsafe()
-            leaf_idx, Vh = self._select_node(safe_leaf_idx=safe_leaf_indices)
+            leaf_idx, Vh = self._select_node()
             node_idx = self._get_node_idx(self.leaf_set[leaf_idx]) 
             self._update_best(node_idx, leaf_idx, Vh)
             if self._can_be_expanded(node_idx, self.leaf_set[leaf_idx].level, Vh ):
-                self._expand(leaf_idx, self.num_update==0)
+                self._expand(leaf_idx, node_idx, len(self.leaf_set) == 1)
+                self._prune_leafset()
             else:
                 return self.leaf_set[leaf_idx].x, node_idx
