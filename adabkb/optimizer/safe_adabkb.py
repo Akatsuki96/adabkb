@@ -1,19 +1,17 @@
-from scipy.linalg import solve_triangular, svd, qr, qr_update, LinAlgError
+from scipy.linalg import solve_triangular, svd, qr, LinAlgError
 import numpy as np
-from adabkb.options import OptimizerOptions
 
-from sklearn.gaussian_process.kernels import Kernel, RBF
-
-from adabkb.utils import GreedyExpansion, diagonal_dot, stable_invert_root, PartitionTreeNode
+from adabkb.utils import  diagonal_dot, stable_invert_root, PartitionTreeNode
 
 from pytictoc import TicToc
-import time
-
-from torch.optim import Adam
 
 from adabkb.optimizer import AbsOptimizer
 
-class AdaBKB(AbsOptimizer):
+class SafeAdaBKB(AbsOptimizer):
+
+    def __init__(self, dot_fun, jmin: float, options = None):
+        super().__init__(dot_fun, options=options)
+        self.jmin = jmin
 
     @property
     def pulled_arms_matrix(self):
@@ -122,14 +120,13 @@ class AdaBKB(AbsOptimizer):
             self._update_mean_variances(idx_to_update=to_upd)
         self._update_beta()
         if not init_phase:
-          #  self._update_bkb_params()
             self._compute_index()
         if self.verbose:
             tictoc.toc('[--] update completed in')
         
     def update_model(self, idx, yt):
-        self._update_model([idx], [yt], len(self.leaf_set) == 1 and self.cpruned == 0)
-        self._prune_leafset()
+        self._update_model([idx], [yt], len(self.leaf_set) == 1 and self.num_update == 0)
+        self.num_update += 1
 
     def _resample_dict(self):
         resample_dict = self.random_state.rand(self.X.shape[0]) < (self.variances * self.pulled_arms_count * self.qbar)
@@ -145,8 +142,8 @@ class AdaBKB(AbsOptimizer):
         self.means = np.append(self.means, 0)
         self.variances = np.append(self.variances, 0)
         self.pulled_arms_count = np.append(self.pulled_arms_count, 0)
-        self.Y = np.append(self.Y, 0).reshape(-1)
         self.X = np.append(self.X, new_x).reshape(-1,self.d)
+        self.Y = np.append(self.Y, 0).reshape(-1)
 
     def _extend_search_space(self, leaf_set, first_expansion = False):
         extended = False
@@ -164,22 +161,23 @@ class AdaBKB(AbsOptimizer):
                 self._expand_embedding()
         return new_x
 
-
-
     def initialize(self, search_space, N : int = 2, h_max : int = 100):
         root = PartitionTreeNode(search_space, N, None, expansion_procedure=self.expand_fun)
+        # root.x is safe
         self._init_maps(root.x, search_space.shape[0])
         self.h_max = h_max
-        self.leaf_set = [root]
-        self.cpruned = 0
-        self.pruned = 0
-        self.I = np.zeros(len(self.leaf_set))
+        self.leaf_set = [root] # Lt
+        self.safe_set = [0] # St : it contains indices of 'safe' leafs
+        self.num_update = 0
+        self.I = np.zeros(len(self.leaf_set)) # I 
+        self.l = np.zeros(len(self.leaf_set)) # lcb
         self.current_best = None
         self.estop = False
         self.best_lcb = None
+
+    def prune_unsafe(self):
+        return [i for i in range(len(self.leaf_set)) if self.l[i] >= self.jmin]
  
-
-
     def _compute_index(self, lfset_indices = None):
         if lfset_indices is None:
             lfset_indices = list(range(len(self.leaf_set)))
@@ -191,47 +189,24 @@ class AdaBKB(AbsOptimizer):
                             self.means[node_idx] + self.beta * np.sqrt(self.variances[node_idx]),
                             self.means[node_idx] + self.beta * np.sqrt(self.variances[node_idx]) + self._compute_V(node.father.level) 
                         ]) + self._compute_V(node.level)
+            self.l[i] = self.means[node_idx] - self.beta * np.sqrt(self.variances[node_idx])
 
-    def _select_node(self):
-        selected_idx = np.argmax(self.I)
+    def _select_node(self, safe_leaf_idx):
+        selected_idx = safe_leaf_idx[np.argmax(self.I[safe_leaf_idx])]
         Vh = self._compute_V(self.leaf_set[selected_idx].level)
         return selected_idx, Vh
-
-    def _prune_leafset(self):
-        ucbs = np.array([self.means[self._get_node_idx(leaf)] + self.beta * np.sqrt(self.variances[self._get_node_idx(leaf)]) + self._compute_V(leaf.level) 
-        for leaf in self.leaf_set 
-        ])
-        #print("UCBS: ", ucbs)
-        #if self.best_lcb is not None:
-        #    print("best LCB: ", self.best_lcb[1]) 
-        lset_size = len(self.leaf_set)
-        to_rem = []
-        lset = []
-        for i in range(len(self.leaf_set)):
-            if self.best_lcb is None or ucbs[i] >= self.best_lcb[1] or np.all(self.best_lcb[0] == self.leaf_set[i].x):
-                lset.append(self.leaf_set[i])
-            else:
-                to_rem.append(i)
-       # print("[-] lset: {}".format(lset_size))
-        self.leaf_set = lset #self.leaf_set[self.best_lcb is None or ucbs >= self.best_lcb[1]]
-       # print("[-] lset: {}".format(len(self.leaf_set)))
-        self.pruned = (lset_size - len(self.leaf_set))
-        self.I = np.delete(self.I, to_rem, 0)
-        self.cpruned += len(to_rem) #(lset_size - len(self.leaf_set))
-        assert len(self.I) == len(self.leaf_set)
-        if len(self.leaf_set) == 0 or (len(self.leaf_set) == 1 and self.leaf_set[0].level == self.h_max):
-            self.estop = True
-
 
     def _can_be_expanded(self, node_idx, h, Vh):
         return np.sqrt(self.variances[node_idx]) * self.beta <= Vh and h < self.h_max
 
-    def _expand(self, leaf_idx, node_idx, first_expansion = False):
+    def _expand(self, leaf_idx, first_expansion = False):
         new_nodes = self.leaf_set[leaf_idx].expand_node()
         self.leaf_set = np.delete(self.leaf_set, leaf_idx, 0)
         self.I = np.delete(self.I, leaf_idx, 0)
+        self.l = np.delete(self.l, leaf_idx, 0)
         self.leaf_set = np.concatenate([self.leaf_set, new_nodes])
         self.I = np.concatenate([self.I, np.zeros(len(new_nodes))])
+        self.l = np.concatenate([self.l, np.zeros(len(new_nodes))])
         assert len(self.I) == len(self.leaf_set) 
         new_x = np.array(self._extend_search_space(new_nodes, first_expansion)).reshape(-1, self.X.shape[1])
         if first_expansion:
@@ -243,7 +218,6 @@ class AdaBKB(AbsOptimizer):
         else:
             new_means = self._evaluate_model(new_x)
             new_node_idx = [self.node2idx[tuple(x)] for x in new_x]
-           # self.means[new_node_idx] = new_means
             for i in range(len(new_means)):
                 self.means[self.node2idx[tuple(new_x[i])]] = new_means[i]
             self._update_variances(new_node_idx)
@@ -256,51 +230,14 @@ class AdaBKB(AbsOptimizer):
             if self.current_best is None or avg_rew > self.current_best[1] or self.leaf_set[leaf_idx] == self.current_best[0]:
                 self.best_lcb = (self.leaf_set[leaf_idx].x, lcb)
                 self.current_best = (self.leaf_set[leaf_idx], avg_rew)
-        
-    #def _update_bkb_params(self):
-    #    maxiter = 10
-    #    Pk = np.eye(2,2)
-    #    h_k = 1e-10
-    #    x = np.array([self.sigma, self.lam]).reshape(1, 2)
-    #    def mlik(x):
-    #        x = x.reshape(-1)
-    #        # x[0] = sigma  x[1] = lambda
-    #        self.dot = RBF(x[0]) if x[0] >= 0 else -x[0]
-    #        if x[1] > 0 and x[1] < 1:
-    #            self.options.lam = x[1]
-    #        elif x[1] < 0:
-    #            self.options.lam = 1e-9
-    #        else:
-    #            self.options.lam = 1.0  
-    #        self._update_mean_variances()
-    #        weighted_Y = self.pulled_arms_matrix.T.dot(self.Y[self.pulled_arms_count != 0])
-    #        comp_pen = -1/2 * np.linalg.slogdet(self.A)[1]
-    #        datafit = -1/2 * weighted_Y.dot(self.A.dot(weighted_Y.T))
-    #        reg = -self.pulled_arms_count.sum()/2 * np.log(2*np.pi)
-    #        return -(datafit + comp_pen + reg)
-    #    for i in range(1, maxiter):
-    #        ml_x = mlik(x)
-    #        gdir = 0
-    #        for j in range(2):
-    #            gdir += (( mlik(x + h_k * Pk[:, j]) - ml_x)/h_k) * Pk[:, j] 
-    #        gnorm = np.linalg.norm(gdir)**2
-    #        if gnorm <= 1e-7:
-    #            print("[--] |grad|^2: {}".format(gnorm))
-    #            break
-    #        x = x - (1/i) * gdir
-    #        print("[--] BKB PARAMS: {}".format(x))
-    #    x = x.reshape(-1)
-    #    self.options.sigma = x[0] if x[0] >= 0 else -x[0]
-    #    self.options.lam = x[1]  if x[1] >= 0 else -x[1]
-    #    self.dot = RBF(x[0]) if x[0] >= 0 else -x[0]
 
     def step(self):
         while True:
-            leaf_idx, Vh = self._select_node()
+            safe_leaf_indices = self.prune_unsafe()
+            leaf_idx, Vh = self._select_node(safe_leaf_idx=safe_leaf_indices)
             node_idx = self._get_node_idx(self.leaf_set[leaf_idx]) 
             self._update_best(node_idx, leaf_idx, Vh)
             if self._can_be_expanded(node_idx, self.leaf_set[leaf_idx].level, Vh ):
-                self._expand(leaf_idx, node_idx, len(self.leaf_set) == 1)
-                self._prune_leafset()
+                self._expand(leaf_idx, self.num_update==0)
             else:
                 return self.leaf_set[leaf_idx].x, node_idx
