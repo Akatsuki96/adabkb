@@ -39,6 +39,7 @@ class BenchmarkFunction:
         self.global_min = global_min
         self.random_state = noise_params[1]
 
+
     def add_noise(self, f_val: float):
         """If noise_std is greater than 0, it adds a noise to the function evaluation f_val
 
@@ -61,6 +62,8 @@ class BenchmarkFunction:
         return (f_val + noise)[0]
 
     def __call__(self, x):
+        if self.verbose:
+            print("[--] x: {}".format(x))
         pass
 
     def __str__(self):
@@ -117,7 +120,8 @@ class Branin(BenchmarkFunction):
         r = 6.0
         t = 1.0 / (8 * np.pi)
         f_val = np.square(x[1] - b* np.square(x[0]) + c*x[0] - r) + s * (1 - t) *(np.cos(x[0])) + s
-        return self.add_noise(f_val)
+        y = self.add_noise(f_val)
+        return y
 
 class Booth(BenchmarkFunction):
     r"""Booth function defined as:
@@ -206,7 +210,7 @@ class Rosenbrock(BenchmarkFunction):
 
     def __init__(self, d:int = 2, noise_params : Tuple = (0.0, None)):
         self.d = d
-        global_minimizers = [[0 for _ in range(d)]]
+        global_minimizers = [[1 for _ in range(d)]]
         global_minimum = (global_minimizers, 0.0)
         search_space = np.array([[-5.0, 10.0] for _ in range(d)]).reshape(d, 2)
         super().__init__("Rosenbrock_{}".format(d), search_space, global_minimum, noise_params=noise_params)
