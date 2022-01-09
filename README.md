@@ -1,18 +1,18 @@
 # Ada-BKB: Adaptive Budgeted Kernelized Bandit
 Implementation of Ada-BKB.
 
-# Install
-To install adabkb package you can use the setup.py script
-```bash
-python3 setup.py install
-```
-To install only dependeces you can use the requirements.txt file
-```bash
-pip install -r requirements.txt
-```
+## Install
+First, you need to install dependences and you can do it with
+`pip install -r requirements.txt`
+Then
+`pip install .`
 
-## Reproducibility
-To reproduce the experiments performed in papers cited below, read instruction in README contained in paper_experiment folder.
+To repeat the hyperparameter tuning experiment you have to install Falkon[https://github.com/FalkonML/falkon] and download the datasets:
+
+- HTRU: https://archive.ics.uci.edu/ml/datasets/HTRU2
+- CASP: https://archive.ics.uci.edu/ml/datasets/Physicochemical+Properties+of+Protein+Tertiary+Structure
+- Magic04: https://archive.ics.uci.edu/ml/datasets/MAGIC+Gamma+Telescope
+>>>>>>> safe_adabkb
 
 ## Citation
 If you use this library, please cite it as below.

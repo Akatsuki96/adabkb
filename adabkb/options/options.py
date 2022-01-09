@@ -42,6 +42,7 @@ class OptimizerOptions:
          fnorm:float=1.0,\
          qbar:int = 1,\
          seed:int=42,\
+         ratio_threshold: int = 2,\
          verbose : bool = False):
         self.kernel = kernel
         self.expand_fun = expand_fun
@@ -52,7 +53,12 @@ class OptimizerOptions:
         self.verbose = verbose
         self.fnorm = fnorm
         self.qbar = qbar
+<<<<<<< HEAD
         self.noise_var = lam**2
+=======
+        self.ratio_threshold = ratio_threshold
+        self.noise_var = noise_var
+>>>>>>> safe_adabkb
         self.delta = delta
         self.random_state = np.random.RandomState(seed)
 

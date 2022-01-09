@@ -627,6 +627,9 @@ class AdaGpucb:
                 leaf_set = self._expansion(leaf_set, leaf_idx, mu, sigma)               
                 #self.cumulative_evaluation_time.append(0)
                 #self.cumulative_expansion_time.append(time.time() - it_time)
+                etime = time.time() - it_time
+                with open(out_dir+"etime.log", "a") as f:
+                    f.write("{}\n".format(etime))
             else:
                 yt = target_fun(node.x)
                 print("[AdaGPUCB] ne: {}\txt: {}\tyt: {}\tlf size: {}".format(ne, node.x, -yt, len(leaf_set)))
@@ -649,7 +652,10 @@ class AdaGpucb:
                 #self.cumulative_expansion_time.append(0)
                 #self.cumulative_evaluation_time.append(etime)
                 with open(out_dir+"trace.log", "a") as f:
-                    f.write("{},{},{},{},{}\n".format(clean_target(node.x), etime,len(leaf_set), 0, False ))
+                    f.write("{},{},{},{},{}\n".format(clean_target(node.x), etime,len(leaf_set), 0, False))
+                with open(out_dir+"etime.log", "a") as f:
+                    f.write("{}\n".format(0))
+
                 #with open(out_dir+"adagpucb_out.log", "a") as f:
                 #    f.write("{},".format(self.Ymap[self.node2idx[tuple(node.x)]] /self.pulled_arms_count[self.node2idx[tuple(node.x)]] ))
             #self.iteration_time.append(time.time() - it_time)
