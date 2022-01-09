@@ -166,21 +166,21 @@ if __name__ == "__main__":
     args = parser.parse_args()
     adabkb_results = plot_adabkb_data(args.path + "/{}/trace.log".format("AdaBKB"), args.global_min)
     adagpucb_results = plot_adagpucb_data(args.path + "/{}/trace.log".format("AdaGPUCB"), args.global_min)
-    #bkb_results = plot_gpucb_bkb_data(args.path + "/{}/trace.log".format("BKB"), args.global_min)
-    #gpucb_results = plot_gpucb_bkb_data(args.path + "/{}/trace.log".format("GPUCB"), args.global_min)
+    bkb_results = plot_gpucb_bkb_data(args.path + "/{}/trace.log".format("BKB"), args.global_min)
+    gpucb_results = plot_gpucb_bkb_data(args.path + "/{}/trace.log".format("GPUCB"), args.global_min)
 
     print("gmin: {}".format(args.global_min))
     
     reg_datas =[
         ("adagpucb", adagpucb_results[0], adagpucb_results[1]),
-     #   ("bkb", bkb_results[0], bkb_results[1]),
-     #   ("gpucb", gpucb_results[0], gpucb_results[1]),
+        ("bkb", bkb_results[0], bkb_results[1]),
+        ("gpucb", gpucb_results[0], gpucb_results[1]),
         ("adabkb", adabkb_results[0], adabkb_results[1])
     ]
     time_data =[
         ("adagpucb", adagpucb_results[2], adagpucb_results[3]),
-     #   ("bkb", bkb_results[2], bkb_results[3]),
-      #  ("gpucb", gpucb_results[2], gpucb_results[3]),
+        ("bkb", bkb_results[2], bkb_results[3]),
+        ("gpucb", gpucb_results[2], gpucb_results[3]),
         ("adabkb", adabkb_results[2], adabkb_results[3])
     ]
     lset_data = [

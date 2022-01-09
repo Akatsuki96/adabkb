@@ -53,12 +53,8 @@ class OptimizerOptions:
         self.verbose = verbose
         self.fnorm = fnorm
         self.qbar = qbar
-<<<<<<< HEAD
         self.noise_var = lam**2
-=======
         self.ratio_threshold = ratio_threshold
-        self.noise_var = noise_var
->>>>>>> safe_adabkb
         self.delta = delta
         self.random_state = np.random.RandomState(seed)
 

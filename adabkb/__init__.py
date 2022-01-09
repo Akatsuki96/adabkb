@@ -6,8 +6,8 @@ from .utils import ExpansionProcedure, GreedyExpansion
 #    Rosenbrock, Hartmann3, Ackley, Shekel, Hartmann6, Levy, Bohachevsky,\
 #    Trid
 
-from .other_methods import Bkb, Gpucb, AdaGpucb, GPUCB
+#from .other_methods import Bkb, Gpucb, AdaGpucb, GPUCB
 
 __all__ = ('AdaBKB', 'OptimizerOptions',\
-    'ExpansionProcedure', 'GreedyExpansion',\
-    'Bkb', 'Gpucb', 'AdaGpucb', 'GPUCB')
+    'ExpansionProcedure', 'GreedyExpansion')#,\
+#    'Bkb', 'Gpucb', 'AdaGpucb', 'GPUCB')

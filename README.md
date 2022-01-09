@@ -3,16 +3,19 @@ Implementation of Ada-BKB.
 
 ## Install
 First, you need to install dependences and you can do it with
-`pip install -r requirements.txt`
+```
+pip install -r requirements.txt
+```
 Then
-`pip install .`
+```
+pip install .
+```
 
 To repeat the hyperparameter tuning experiment you have to install Falkon[https://github.com/FalkonML/falkon] and download the datasets:
 
 - HTRU: https://archive.ics.uci.edu/ml/datasets/HTRU2
 - CASP: https://archive.ics.uci.edu/ml/datasets/Physicochemical+Properties+of+Protein+Tertiary+Structure
 - Magic04: https://archive.ics.uci.edu/ml/datasets/MAGIC+Gamma+Telescope
->>>>>>> safe_adabkb
 
 ## Citation
 If you use this library, please cite it as below.

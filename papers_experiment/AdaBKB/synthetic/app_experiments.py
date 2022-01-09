@@ -2,12 +2,16 @@ import os
 import time
 import numpy as np
 import itertools as it
-from adabkb.benchmark_functions import *
+
+from adabkb.benchmark_functions.benchmark_functions import *
+from adabkb.benchmark_functions.other_methods import *
+
 from sklearn.gaussian_process.kernels import RBF
 from adabkb.options import OptimizerOptions
+from adabkb.kernels import GaussianKernel
 
 from adabkb.optimizer import AdaBKB
-from adabkb.other_methods import Bkb, AdaGpucb, GPUCB 
+#from adabkb.other_methods import Bkb, AdaGpucb, GPUCB 
 
 np.random.seed(12)
 
@@ -110,7 +114,7 @@ def adabkb_test(config):
         ct = []
         creg = []
         tot_time = time.time()
-        adabkb = AdaBKB(adabkb_config['kernel'], adabkb_config['options'])
+        adabkb = AdaBKB(adabkb_config['options'])
         #    def initialize(self, search_space, N : int = 2, h_max : int = 100):
         adabkb.initialize(fun.search_space, adabkb_config['N'], adabkb_config['hmax'])
         for t in range(T):
@@ -221,8 +225,8 @@ def get_hartmann6_config():
     rho = N ** (-1/np.sqrt(2))
     hmax = int(np.log(T))#/ (2 * alpha * np.log(1/rho)))
     gfun = lambda x : (1/sigma) * x
-    opt = OptimizerOptions(gfun, v_1 = v_1, rho = rho,\
-        sigma = sigma, lam = lam, noise_var=lam**2, delta=delta,\
+    opt = OptimizerOptions(GaussianKernel(sigma), v_1 = v_1, rho = rho,\
+        sigma = sigma, lam = lam,  delta=delta,\
         fnorm=fnorm, qbar=qbar, seed=seed)
     arm_set = np.array(
         list(it.product(*[np.linspace(d[0], d[1], 10) for d in hman_fun.search_space]))
@@ -293,8 +297,8 @@ def get_branin_config():
     rho = N ** (-1/np.sqrt(2))
     hmax = 5
     gfun = lambda x : (1/sigma) * x
-    opt = OptimizerOptions(gfun, v_1 = v_1, rho = rho,\
-        sigma = sigma, lam = lam, noise_var=lam**2, delta=delta,\
+    opt = OptimizerOptions(GaussianKernel(sigma), v_1 = v_1, rho = rho,\
+        sigma = sigma, lam = lam,  delta=delta,\
         fnorm=fnorm, qbar=qbar, seed=seed)
     arm_set = np.array(
         list(it.product(*[np.linspace(d[0], d[1], 15) for d in bra_fun.search_space]))
@@ -366,8 +370,8 @@ def get_beale_config():
     rho = N ** (-1/np.sqrt(2))
     hmax = 5
     gfun = lambda x : (1/sigma) * x
-    opt = OptimizerOptions(gfun, v_1 = v_1, rho = rho,\
-        sigma = sigma, lam = lam, noise_var=lam**2, delta=delta,\
+    opt = OptimizerOptions(GaussianKernel(sigma), v_1 = v_1, rho = rho,\
+        sigma = sigma, lam = lam,  delta=delta,\
         fnorm=fnorm, qbar=qbar, seed=seed)
     arm_set = np.array(
         list(it.product(*[np.linspace(d[0], d[1], 15) for d in bea_fun.search_space]))
@@ -438,8 +442,8 @@ def get_ackley2_config():
     rho = N ** (-1/np.sqrt(2))
     hmax = 7
     gfun = lambda x : (1/sigma) * x
-    opt = OptimizerOptions(gfun, v_1 = v_1, rho = rho,\
-        sigma = sigma, lam = lam, noise_var=lam**2, delta=delta,\
+    opt = OptimizerOptions(GaussianKernel(sigma), v_1 = v_1, rho = rho,\
+        sigma = sigma, lam = lam,  delta=delta,\
         fnorm=fnorm, qbar=qbar, seed=seed)
     arm_set = np.array(
         list(it.product(*[np.linspace(d[0], d[1], 15) for d in ack2_fun.search_space]))
@@ -513,8 +517,8 @@ def get_shekel4_config():
     rho = N ** (-1/np.sqrt(d))
     hmax = 6
     gfun = lambda x : (1/sigma) * x
-    opt = OptimizerOptions(gfun, v_1 = v_1, rho = rho,\
-        sigma = sigma, lam = lam, noise_var=lam**2, delta=delta,\
+    opt = OptimizerOptions(GaussianKernel(sigma), v_1 = v_1, rho = rho,\
+        sigma = sigma, lam = lam,  delta=delta,\
         fnorm=fnorm, qbar=qbar, seed=seed)
     arm_set = np.array(
         list(it.product(*[np.linspace(d[0], d[1], 15) for d in shk_fun.search_space]))
@@ -588,8 +592,8 @@ def get_bohachevsky_config():
     rho = N ** (-1/np.sqrt(2))
     hmax = 9
     gfun = lambda x : (1/sigma) * x
-    opt = OptimizerOptions(gfun, v_1 = v_1, rho = rho,\
-        sigma = sigma, lam = lam, noise_var=lam**2, delta=delta,\
+    opt = OptimizerOptions(GaussianKernel(sigma), v_1 = v_1, rho = rho,\
+        sigma = sigma, lam = lam,  delta=delta,\
         fnorm=fnorm, qbar=qbar, seed=seed)
     arm_set = np.array(
         list(it.product(*[np.linspace(d[0], d[1], 15) for d in boh_fun.search_space]))
@@ -662,8 +666,8 @@ def get_levy8_config():
     rho = N ** (-1/np.sqrt(8))
     hmax = int(np.log(T)/ (2 * alpha * np.log(1/rho))) #5
     gfun = lambda x : (1/sigma) * x
-    opt = OptimizerOptions(gfun, v_1 = v_1, rho = rho,\
-        sigma = sigma, lam = lam, noise_var=lam**2, delta=delta,\
+    opt = OptimizerOptions(GaussianKernel(sigma), v_1 = v_1, rho = rho,\
+        sigma = sigma, lam = lam,  delta=delta,\
         fnorm=fnorm, qbar=qbar, seed=seed)
     arm_set = np.array(
         list(it.product(*[np.linspace(d[0], d[1], 5) for d in lev8_fun.search_space]))
@@ -736,8 +740,8 @@ def get_rosenbrock2_config():
     rho = N ** (-1/np.sqrt(2))
     hmax = 10#int(np.log(T)/ (2 * alpha * np.log(1/rho)))
     gfun = lambda x : (1/sigma) * x
-    opt = OptimizerOptions(gfun, v_1 = v_1, rho = rho,\
-        sigma = sigma, lam = lam, noise_var=lam**2, delta=delta,\
+    opt = OptimizerOptions(GaussianKernel(sigma), v_1 = v_1, rho = rho,\
+        sigma = sigma, lam = lam,  delta=delta,\
         fnorm=fnorm, qbar=qbar, seed=seed)
     arm_set = np.array(
         list(it.product(*[np.linspace(d[0], d[1], 15) for d in ros_fun.search_space]))
@@ -809,8 +813,8 @@ def get_trid2_config():
     rho = N ** (-1/np.sqrt(2))
     hmax = 7
     gfun = lambda x : (1/sigma) * x
-    opt = OptimizerOptions(gfun, v_1 = v_1, rho = rho,\
-        sigma = sigma, lam = lam, noise_var=lam**2, delta=delta,\
+    opt = OptimizerOptions(GaussianKernel(sigma), v_1 = v_1, rho = rho,\
+        sigma = sigma, lam = lam,  delta=delta,\
         fnorm=fnorm, qbar=qbar, seed=seed)
     arm_set = np.array(
         list(it.product(*[np.linspace(d[0], d[1], 15) for d in tri2_fun.search_space]))
@@ -881,8 +885,8 @@ def get_hartmann3_config():
     rho = N ** (-1/np.sqrt(3))
     hmax = 7
     gfun = lambda x : (1/sigma) * x
-    opt = OptimizerOptions(gfun, v_1 = v_1, rho = rho,\
-        sigma = sigma, lam = lam, noise_var=lam**2, delta=delta,\
+    opt = OptimizerOptions(GaussianKernel(sigma), v_1 = v_1, rho = rho,\
+        sigma = sigma, lam = lam,  delta=delta,\
         fnorm=fnorm, qbar=qbar, seed=seed)
     arm_set = np.array(
         list(it.product(*[np.linspace(d[0], d[1], 15) for d in hart3_fun.search_space]))
@@ -955,8 +959,8 @@ def get_trid4_config():
     rho = 2 ** (-1/np.sqrt(4))
     hmax = 7 #int(np.log(T)/(2*alpha*np.log(1/rho)))
     gfun = lambda x : (1/sigma) * x
-    opt = OptimizerOptions(gfun, v_1 = v_1, rho = rho,\
-        sigma = sigma, lam = lam, noise_var=lam**2, delta=delta,\
+    opt = OptimizerOptions(GaussianKernel(sigma), v_1 = v_1, rho = rho,\
+        sigma = sigma, lam = lam,  delta=delta,\
         fnorm=fnorm, qbar=qbar, seed=seed)
     arm_set = np.array(
         list(it.product(*[np.linspace(d[0], d[1], 15) for d in tri4_fun.search_space]))
@@ -1030,8 +1034,8 @@ def get_ackley5_config():
     rho = N ** (-1/np.sqrt(3))
     hmax = 6 #int(np.log(T)/(2*alpha*np.log(1/rho)))
     gfun = lambda x : (1/sigma) * x
-    opt = OptimizerOptions(gfun, v_1 = v_1, rho = rho,\
-        sigma = sigma, lam = lam, noise_var=lam**2, delta=delta,\
+    opt = OptimizerOptions(GaussianKernel(sigma), v_1 = v_1, rho = rho,\
+        sigma = sigma, lam = lam,  delta=delta,\
         fnorm=fnorm, qbar=qbar, seed=seed)
     arm_set = np.array(
         list(it.product(*[np.linspace(d[0], d[1], 10) for d in ack5_fun.search_space]))
@@ -1106,8 +1110,8 @@ def get_ackley30_config():
     rho = 1 ** (-1/np.sqrt(30))
     hmax = 200 #int(np.log(T)/(2*alpha*np.log(1/rho)))
     gfun = lambda x : (1/sigma) * x
-    opt = OptimizerOptions(gfun, v_1 = v_1, rho = rho,\
-        sigma = sigma, lam = lam, noise_var=lam**2, delta=delta,\
+    opt = OptimizerOptions(GaussianKernel(sigma), v_1 = v_1, rho = rho,\
+        sigma = sigma, lam = lam,  delta=delta,\
         fnorm=fnorm, qbar=qbar, seed=seed)
 
     config = {
@@ -1153,8 +1157,8 @@ def get_levy6_config():
     rho = N ** (-1/np.sqrt(d))
     hmax = 7#6 #int(np.log(T)/(2*alpha*np.log(1/rho)))
     gfun = lambda x : (1/sigma) * x
-    opt = OptimizerOptions(gfun, v_1 = v_1, rho = rho,\
-        sigma = sigma, lam = lam, noise_var=lam**2, delta=delta,\
+    opt = OptimizerOptions(GaussianKernel(sigma), v_1 = v_1, rho = rho,\
+        sigma = sigma, lam = lam,  delta=delta,\
         fnorm=fnorm, qbar=qbar, seed=seed)
     arm_set = np.array(
         list(it.product(*[np.linspace(d[0], d[1], 10) for d in lev6_fun.search_space]))
@@ -1228,8 +1232,8 @@ def get_ras8_config():
     rho = N ** (-1/np.sqrt(d))
     hmax = 10#6 #int(np.log(T)/(2*alpha*np.log(1/rho)))
     gfun = lambda x : (1/sigma) * x
-    opt = OptimizerOptions(gfun, v_1 = v_1, rho = rho,\
-        sigma = sigma, lam = lam, noise_var=lam**2, delta=delta,\
+    opt = OptimizerOptions(GaussianKernel(sigma), v_1 = v_1, rho = rho,\
+        sigma = sigma, lam = lam,  delta=delta,\
         fnorm=fnorm, qbar=qbar, seed=seed)
     arm_set = np.array(
         list(it.product(*[np.linspace(d[0], d[1], 5) for d in ras8_fun.search_space]))
@@ -1304,8 +1308,8 @@ def get_dix10_config():
     rho = N ** (-1/np.sqrt(d))
     hmax = 10#6 #int(np.log(T)/(2*alpha*np.log(1/rho)))
     gfun = lambda x : (1/sigma) * x
-    opt = OptimizerOptions(gfun, v_1 = v_1, rho = rho,\
-        sigma = sigma, lam = lam, noise_var=lam**2, delta=delta,\
+    opt = OptimizerOptions(GaussianKernel(sigma), v_1 = v_1, rho = rho,\
+        sigma = sigma, lam = lam,  delta=delta,\
         fnorm=fnorm, qbar=qbar, seed=seed)
     arm_set = np.array(
         list(it.product(*[np.linspace(d[0], d[1], 5) for d in dix10_fun.search_space]))

@@ -2,11 +2,13 @@ import os
 import time
 import numpy as np
 import itertools as it
-from adabkb.benchmark_functions import *
+from adabkb.benchmark_functions.benchmark_functions import *
+from adabkb.benchmark_functions.other_methods import *
 from sklearn.gaussian_process.kernels import RBF
 from adabkb.options import OptimizerOptions
 
 from adabkb.optimizer import AdaBKB
+from adabkb.kernels import GaussianKernel
 
 np.random.seed(12)
 
@@ -90,7 +92,7 @@ def adabkb_test(config, F_value):
         creg = []
         tot_time = time.time()
         adabkb_config['options'].fnorm = 1.0#F_value
-        adabkb = AdaBKB(adabkb_config['kernel'], adabkb_config['options'])
+        adabkb = AdaBKB(adabkb_config['options'])
         #    def initialize(self, search_space, N : int = 2, h_max : int = 100):
         adabkb.initialize(fun.search_space, adabkb_config['N'], adabkb_config['hmax'])
         for t in range(T):
@@ -119,8 +121,8 @@ def get_branin_config():
     rho = N ** (-1/np.sqrt(2))
     hmax = 5
     gfun = lambda x : (1/sigma) * x
-    opt = OptimizerOptions(gfun, v_1 = v_1, rho = rho,\
-        sigma = sigma, lam = lam, noise_var=lam**2, delta=delta,\
+    opt = OptimizerOptions(GaussianKernel(sigma), v_1 = v_1, rho = rho,\
+        sigma = sigma, lam = lam,  delta=delta,\
         fnorm=fnorm, qbar=qbar, seed=seed)
     return {
         'trials' : trials,
@@ -153,8 +155,8 @@ def get_ackley30_config():
     rho = N ** (-1/np.sqrt(30))
     hmax = 300
     gfun = lambda x : (1/sigma) * x
-    opt = OptimizerOptions(gfun, v_1 = v_1, rho = rho,\
-        sigma = sigma, lam = lam, noise_var=lam**2, delta=delta,\
+    opt = OptimizerOptions(GaussianKernel(sigma), v_1 = v_1, rho = rho,\
+        sigma = sigma, lam = lam,  delta=delta,\
         fnorm=fnorm, qbar=qbar, seed=seed)
     return {
         'trials' : trials,
@@ -187,8 +189,8 @@ def get_ackley3_config():
     rho = N ** (-1/np.sqrt(30))
     hmax = 10
     gfun = lambda x : (1/sigma) * x
-    opt = OptimizerOptions(gfun, v_1 = v_1, rho = rho,\
-        sigma = sigma, lam = lam, noise_var=lam**2, delta=delta,\
+    opt = OptimizerOptions(GaussianKernel(sigma), v_1 = v_1, rho = rho,\
+        sigma = sigma, lam = lam,  delta=delta,\
         fnorm=fnorm, qbar=qbar, seed=seed)
     return {
         'trials' : trials,
@@ -221,8 +223,8 @@ def get_ackley4_config():
     rho = N ** (-1/np.sqrt(4))
     hmax = 10
     gfun = lambda x : (1/sigma) * x
-    opt = OptimizerOptions(gfun, v_1 = v_1, rho = rho,\
-        sigma = sigma, lam = lam, noise_var=lam**2, delta=delta,\
+    opt = OptimizerOptions(GaussianKernel(sigma), v_1 = v_1, rho = rho,\
+        sigma = sigma, lam = lam,  delta=delta,\
         fnorm=fnorm, qbar=qbar, seed=seed)
     return {
         'trials' : trials,
@@ -257,8 +259,8 @@ def get_trid4_config():
     rho = 1 ** (-1/np.sqrt(4))
     hmax = 30 #int(np.log(T)/(2*alpha*np.log(1/rho)))
     gfun = lambda x : (1/sigma) * x
-    opt = OptimizerOptions(gfun, v_1 = v_1, rho = rho,\
-        sigma = sigma, lam = lam, noise_var=lam**2, delta=delta,\
+    opt = OptimizerOptions(GaussianKernel(sigma), v_1 = v_1, rho = rho,\
+        sigma = sigma, lam = lam,  delta=delta,\
         fnorm=fnorm, qbar=qbar, seed=seed)
 
     return {
@@ -288,8 +290,8 @@ def get_hartmann6_config():
     rho = 1#(-1/np.sqrt(2))
     hmax = 90#int(np.log(T))#/ (2 * alpha * np.log(1/rho)))
     gfun = lambda x : (1/sigma) * x
-    opt = OptimizerOptions(gfun, v_1 = v_1, rho = rho,\
-        sigma = sigma, lam = lam, noise_var=lam**2, delta=delta,\
+    opt = OptimizerOptions(GaussianKernel(sigma), v_1 = v_1, rho = rho,\
+        sigma = sigma, lam = lam,  delta=delta,\
         fnorm=fnorm, qbar=qbar, seed=seed)
     return {
         'trials' : trials,
@@ -319,8 +321,8 @@ def get_ras8_config():
     rho = 1 ** (-1/np.sqrt(d))
     hmax = 20#6 #int(np.log(T)/(2*alpha*np.log(1/rho)))
     gfun = lambda x : (1/sigma) * x
-    opt = OptimizerOptions(gfun, v_1 = v_1, rho = rho,\
-        sigma = sigma, lam = lam, noise_var=lam**2, delta=delta,\
+    opt = OptimizerOptions(GaussianKernel(sigma), v_1 = v_1, rho = rho,\
+        sigma = sigma, lam = lam,  delta=delta,\
         fnorm=fnorm, qbar=qbar, seed=seed)
     return {
         'trials' : trials,

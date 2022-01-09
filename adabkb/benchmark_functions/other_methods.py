@@ -672,3 +672,5 @@ class AdaGpucb:
         #self.cumulative_evaluation_time = np.cumsum(self.cumulative_evaluation_time)
         #self.time_over_budget = np.cumsum(self.time_over_budget)
         return leaf_set, last_selected, best[0]
+
+__all__ = ('Bkb', 'Gpucb', 'AdaGpucb', 'GPUCB')

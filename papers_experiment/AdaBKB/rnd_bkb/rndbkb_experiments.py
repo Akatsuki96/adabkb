@@ -2,12 +2,14 @@ import os
 import time
 import numpy as np
 import itertools as it
-from adabkb.benchmark_functions import *
+from adabkb.benchmark_functions.benchmark_functions import *
+from adabkb.benchmark_functions.other_methods import *
 from sklearn.gaussian_process.kernels import RBF
 from adabkb.options import OptimizerOptions
+from adabkb.kernels import GaussianKernel
 
 from adabkb.optimizer import AdaBKB
-from adabkb.other_methods import Bkb
+#from adabkb.other_methods import Bkb
 
 np.random.seed(12)
 
@@ -116,7 +118,7 @@ def adabkb_test(config):
         ct = []
         creg = []
         tot_time = time.time()
-        adabkb = AdaBKB(adabkb_config['kernel'], adabkb_config['options'])
+        adabkb = AdaBKB( adabkb_config['options'])
         #    def initialize(self, search_space, N : int = 2, h_max : int = 100):
         adabkb.initialize(fun.search_space, adabkb_config['N'], adabkb_config['hmax'])
         for t in range(T):
