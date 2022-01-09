@@ -119,7 +119,7 @@ def adabkb_test(config):
             yt = -fun(xt)
             adabkb.update_model(node_id, yt)
             tm = time.time() - tm
-            print("[--] t: {}/{}\txt: {}\tyt: {}".format(t, T, xt, -yt))
+            print("[--] t: {}/{}\txt: {}\tyt: {}\t|L_t|: {}".format(t, T, xt, -yt, len(adabkb.leaf_set)))
             write_log("./out/{}/AdaBKB/trace.log".format(fun.name), nfree_fun(xt), tm, len(adabkb.leaf_set), adabkb.pruned, adabkb.estop)
             creg.append(nfree_fun(xt) - fun.global_min[1])
             ct.append(tm)
@@ -1093,6 +1093,55 @@ def get_ackley5_config():
     }
     return config
 
+
+ack30_fun = Ackley(30, (0.0001, np.random.RandomState(seed)))
+
+def get_ackley30_config():
+    sigma = 2.0
+    sigma_disc = 50.0
+    lam = 1e-4
+    C1 = 2.0
+    N = 3
+    v_1 =  1 * np.sqrt(1/30)
+    rho = 1 ** (-1/np.sqrt(30))
+    hmax = 200 #int(np.log(T)/(2*alpha*np.log(1/rho)))
+    gfun = lambda x : (1/sigma) * x
+    opt = OptimizerOptions(gfun, v_1 = v_1, rho = rho,\
+        sigma = sigma, lam = lam, noise_var=lam**2, delta=delta,\
+        fnorm=fnorm, qbar=qbar, seed=seed)
+
+    config = {
+        'trials' : trials,
+        'T' : T,
+        'fun' : ack30_fun,
+        'nfree_fun' : Ackley(30),
+        'search_space': ack30_fun.search_space,
+        'adabkb_params' : {
+            'sigma' : sigma,
+            'lam' : lam,
+            'alpha' : alpha,
+            'kernel' : RBF(sigma),
+            'options' : opt,
+            'N' : N,
+            'hmax' : hmax + 1
+        },
+        'adagpucb_params':{
+            'sigma' : sigma,
+            'lam' : lam,
+            'C1' : C1,
+            'g' : gfun,
+            'v_1' :  v_1,
+            'rho' : rho,
+            'delta' : delta,
+            'fnorm' : fnorm,
+            'N' : N,
+            'hmax' : hmax
+        }
+
+    }
+    return config
+
+
 lev6_fun = Levy(6, (0.01, np.random.RandomState(seed)))
 def get_levy6_config():
     sigma = 5.0
@@ -1320,10 +1369,12 @@ def get_dix10_config():
 
 def execute_experiments(configs):
     for config in configs:
-      #  adabkb_test(config) 
-      #  adagpucb_test(config)
-        bkb_test(config)
-        gpucb_test(config)
+        t = time.time()
+     #   adabkb_test(config)
+     #   print("[--] End in: {}".format(round(time.time() - t,2))) 
+        adagpucb_test(config)
+      #  bkb_test(config)
+      #  gpucb_test(config)
       
 
 
@@ -1341,18 +1392,20 @@ if __name__ == '__main__':
     #lev6_config = get_levy6_config()
     #ras8_config = get_ras8_config()
     #dix10_config = get_dix10_config()
-    ack5_config = get_ackley5_config()
+   # ack5_config = get_ackley5_config()
+    ack30_config = get_ackley30_config()
 
     execute_experiments ([
-    #   branin_config, 
+     #  branin_config, 
     #   ackley2_config, 
     #   beale_config, 
     #   bohachevsky_config, 
     #   rosenbrock2_config, 
     #   shekel_config, 
     #    trid4_config,
-        ack5_config,
+    #    ack5_config,
     #    lev6_config,
     #    ras8_config,
-    #dix10_config
+    #    dix10_config,
+    ack30_config
      ])

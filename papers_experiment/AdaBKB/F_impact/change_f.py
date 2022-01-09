@@ -250,8 +250,8 @@ if __name__ == '__main__':
     ras8_config = get_ras8_config()
     
     execute_experiments ([
-     #   branin_config,
-     #   trid4_config,
-     #   hart6_config,
+        branin_config,
+        trid4_config,
+        hart6_config,
         ras8_config
     ])

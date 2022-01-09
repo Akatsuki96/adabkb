@@ -111,9 +111,9 @@ if __name__ == "__main__":
     i=0
     for size in sizes:
         rndbkb_results = get_rndbkb_data(args.path + "/{}_{}/trace.log".format("AdaBKB", size), args.global_min)
-        reg_datas.append(("adabkb[size={}]".format(size), rndbkb_results[0], rndbkb_results[1], colors[i]))
-        time_data.append(("adabkb[size={}]".format(size), rndbkb_results[2], rndbkb_results[3], colors[i]))
-        lset_data.append(("adabkb[size={}]".format(size), rndbkb_results[4], rndbkb_results[5], colors[i]))
+        reg_datas.append(("adabkb[F={}]".format(size), rndbkb_results[0], rndbkb_results[1], colors[i]))
+        time_data.append(("adabkb[F={}]".format(size), rndbkb_results[2], rndbkb_results[3], colors[i]))
+        lset_data.append(("adabkb[F={}]".format(size), rndbkb_results[4], rndbkb_results[5], colors[i]))
         i+=1
 
     plot_regret(args.funname, reg_datas, None, args.path)

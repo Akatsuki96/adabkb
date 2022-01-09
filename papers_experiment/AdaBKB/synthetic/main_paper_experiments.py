@@ -209,10 +209,10 @@ def get_hartmann6_config():
     sigma = 0.50
     lam = 1e-3
     C1 = 2.0#5e-6 #6e-6
-    N = 5 
-    v_1 =  N * np.sqrt(1/2)
-    rho = N ** (-1/np.sqrt(2))
-    hmax = int(np.log(T))#/ (2 * alpha * np.log(1/rho)))
+    N = 3
+    v_1 =  N * np.sqrt(1/6)
+    rho = N ** (-1/np.sqrt(6))
+    hmax = 50#int(np.log(T))#/ (2 * alpha * np.log(1/rho)))
     gfun = lambda x : (1/sigma) * x
     opt = OptimizerOptions(gfun, v_1 = v_1, rho = rho,\
         sigma = sigma, lam = lam, noise_var=lam**2, delta=delta,\
@@ -433,7 +433,7 @@ if __name__ == '__main__':
 
     #write_exp_info(hartmann_config)
 
-    #adabkb_test(hartmann_config) 
+    adabkb_test(hartmann_config) 
     #adagpucb_test(hartmann_config)
     #bkb_test(hartmann_config)
     #gpucb_test(hartmann_config)
@@ -446,8 +446,8 @@ if __name__ == '__main__':
 
 
    # write_exp_info(lev8_config)
-    adabkb_test(lev8_config) 
-    adagpucb_test(lev8_config)
-    bkb_test(lev8_config)
-    gpucb_test(lev8_config)
+    #adabkb_test(lev8_config) 
+    #adagpucb_test(lev8_config)
+    #bkb_test(lev8_config)
+    #gpucb_test(lev8_config)
     

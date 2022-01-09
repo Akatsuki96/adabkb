@@ -57,7 +57,7 @@ def plot_adabkb_data(path, gmin):
     with open(path, "r") as f:
         parts = f.read().split(DELIM)[:-1]
     regrets, times, ls_size, estop = [], [], [], []
-    for part in parts:
+    for part in parts[:1]:
         reg, tm, lsize = [], [], []
         es = -1
         c = 0
@@ -88,7 +88,7 @@ def plot_adagpucb_data(path, gmin):
     with open(path, "r") as f:
         parts = f.read().split(DELIM)[:-1]
     regrets, times, ls_size = [], [], []
-    for part in parts:
+    for part in parts[-2:-1]:
         reg, tm, lsize = [], [], []
 
         for line in part.split("\n")[:-1]:
@@ -140,7 +140,7 @@ def plot_ris(title, fun_name, datas, path, xlab, ylab, out, loc, cut=None, yscal
     for (label, data, conf) in datas:
         ax.plot(range(len(data)), data, '-', c=COLORS[label], label=label)
         if conf is not None:
-            ax.fill_between(range(len(data)), conf[1], conf[0], alpha=0.3, color=COLORS[label])
+            ax.fill_between(range(len(data)), conf[1], conf[0], alpha=0.8, color=COLORS[label])
     if cut is not None and cut>0:
         ax.axvline(x=cut,linestyle='--',color="red", alpha=0.4)
     ax.legend(loc=loc)#"upper right")
@@ -166,22 +166,22 @@ if __name__ == "__main__":
     args = parser.parse_args()
     adabkb_results = plot_adabkb_data(args.path + "/{}/trace.log".format("AdaBKB"), args.global_min)
     adagpucb_results = plot_adagpucb_data(args.path + "/{}/trace.log".format("AdaGPUCB"), args.global_min)
-    bkb_results = plot_gpucb_bkb_data(args.path + "/{}/trace.log".format("BKB"), args.global_min)
-    gpucb_results = plot_gpucb_bkb_data(args.path + "/{}/trace.log".format("GPUCB"), args.global_min)
+    #bkb_results = plot_gpucb_bkb_data(args.path + "/{}/trace.log".format("BKB"), args.global_min)
+    #gpucb_results = plot_gpucb_bkb_data(args.path + "/{}/trace.log".format("GPUCB"), args.global_min)
 
     print("gmin: {}".format(args.global_min))
     
     reg_datas =[
-        ("adabkb", adabkb_results[0], adabkb_results[1]),
         ("adagpucb", adagpucb_results[0], adagpucb_results[1]),
-        ("bkb", bkb_results[0], bkb_results[1]),
-        ("gpucb", gpucb_results[0], gpucb_results[1])
+     #   ("bkb", bkb_results[0], bkb_results[1]),
+     #   ("gpucb", gpucb_results[0], gpucb_results[1]),
+        ("adabkb", adabkb_results[0], adabkb_results[1])
     ]
     time_data =[
-        ("adabkb", adabkb_results[2], adabkb_results[3]),
         ("adagpucb", adagpucb_results[2], adagpucb_results[3]),
-        ("bkb", bkb_results[2], bkb_results[3]),
-        ("gpucb", gpucb_results[2], gpucb_results[3])
+     #   ("bkb", bkb_results[2], bkb_results[3]),
+      #  ("gpucb", gpucb_results[2], gpucb_results[3]),
+        ("adabkb", adabkb_results[2], adabkb_results[3])
     ]
     lset_data = [
         ("adabkb", adabkb_results[4], adabkb_results[5]),
