@@ -1,5 +1,5 @@
 # Ada-BKB: Adaptive Budgeted Kernelized Bandit
-Implementation of Ada-BKB.
+Implementation of **Ada-BKB: Scalable Gaussian Process Optimization on Continuous Domain by Adaptive Discretization** published in AISTATS 2022. A preprint of the paper can be found at the following link: https://arxiv.org/abs/2106.08598
 
 ## Install
 First, you need to install dependences and you can do it with
@@ -10,12 +10,7 @@ Then
 ```
 pip install .
 ```
-
-To repeat the hyperparameter tuning experiment you have to install Falkon[https://github.com/FalkonML/falkon] and download the datasets:
-
-- HTRU: https://archive.ics.uci.edu/ml/datasets/HTRU2
-- CASP: https://archive.ics.uci.edu/ml/datasets/Physicochemical+Properties+of+Protein+Tertiary+Structure
-- Magic04: https://archive.ics.uci.edu/ml/datasets/MAGIC+Gamma+Telescope
+To repeat paper experiments, other dependeces are needed. You can find the instruction to run paper experiments in *papers_experiment* folder
 
 ## Citation
 If you use this library, please cite it as below.

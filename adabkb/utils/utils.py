@@ -1,5 +1,4 @@
 import numpy as np
-from sklearn.gaussian_process.kernels import Kernel
 
 def flatten_list(lst):
     result = []

@@ -1,8 +1,5 @@
+wheel
 numpy
 scipy
 sklearn
 pytictoc
-matplotlib
-seaborn
-gpytorch
-cmaes
