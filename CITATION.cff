@@ -10,6 +10,7 @@ authors:
 - family-names: "Rosasco"
   given-names: "Lorenzo"
 title: "Ada-BKB: Scalable Gaussian Process Optimization on Continuous Domain by Adaptive Discretization"
+url: "https://github.com/Akatsuki96/adabkb"
 version: 1.0.0
 preferred-citation:
   type: article
