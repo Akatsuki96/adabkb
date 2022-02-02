@@ -12,25 +12,6 @@ class ExpansionProcedure:
     def __call__(self, node):
         pass
 
-class SplitOnRepresenter(ExpansionProcedure):
-
-    def __call__(self, node): 
-        id = super()._get_side_to_split(node)
-        return self._split_(id, node)
-
-    def _split_(self, id, node):
-        pivots = [node.x, node.partition[:, 1]] #(M - m) * self.random_state.random(node.N) + m
-        children = []
-        last_lb = node.partition[:, 0][id]
-        for i in range(2):
-            new_partition = node.partition.copy()
-            lb = new_partition[:, 0]
-            ub = new_partition[:, 1]
-            lb[id] = last_lb
-            ub[id] = pivots[i][id]
-            children.append((new_partition, node.index*2 + i)) 
-            last_lb = ub[id]
-        return children
 
 class GreedyExpansion(ExpansionProcedure):
 

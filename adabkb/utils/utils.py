@@ -40,16 +40,3 @@ def stable_invert_root(U, S):
 
     return U_thin, S_thin_inv_root
 
-def tonp(x):
-    return np.asarray(x)
-
-
-def to_minlen(lst, num_exp = 1):
-    ris = []
-    min_len = np.min([len(l) for l in lst])
-    for l in lst:
-        if len(l) > min_len:
-            ris.append(l[:min_len])
-        else:
-            ris.append(l)
-    return np.array(ris)#.reshape(num_exp, min_len)

@@ -1,15 +1,11 @@
-from scipy.linalg import solve_triangular, svd, qr, qr_update, LinAlgError
 import numpy as np
-from adabkb.options import OptimizerOptions
-
-from sklearn.gaussian_process.kernels import Kernel, RBF
-
-from adabkb.utils import GreedyExpansion, diagonal_dot, stable_invert_root, PartitionTreeNode
-
 from pytictoc import TicToc
-import time
 
 from adabkb.optimizer import AbsOptimizer
+
+from scipy.linalg import solve_triangular, svd, qr, LinAlgError
+from adabkb.utils import diagonal_dot, stable_invert_root, PartitionTreeNode
+
 
 class AdaBKB(AbsOptimizer):
 
