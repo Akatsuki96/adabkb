@@ -1,5 +1,5 @@
 import numpy as np
-from .node_utils import ExpansionProcedure
+from .expansion_procedure import ExpansionProcedure
 
 class PartitionTreeNode:
 
