@@ -1,14 +1,18 @@
 import os
+import sys
+
+sys.path.insert(0, '../')
+
+
 import time
 import numpy as np
 import itertools as it
-from adabkb.benchmark_functions import SixHumpCamel, Hartmann6, Levy, Bkb, AdaGpucb, GPUCB 
+from benchmark_functions import SixHumpCamel, Hartmann6, Levy, Bkb, AdaGpucb, GPUCB 
 from sklearn.gaussian_process.kernels import RBF
 from adabkb.options import OptimizerOptions
 from adabkb.kernels import GaussianKernel
 
 from adabkb.optimizer import AdaBKB
-#from exp_utils.other_methods shared import Bkb, AdaGpucb, GPUCB 
 
 np.random.seed(12)
 
@@ -209,11 +213,11 @@ def adagpucb_test(config):
 def get_hartmann6_config():
     sigma = 0.50
     lam = 1e-3
-    C1 = 2.0#5e-6 #6e-6
+    C1 = 0.50#5e-6 #6e-6
     N = 3
     v_1 =  N * np.sqrt(1/6)
     rho = N ** (-1/np.sqrt(6))
-    hmax = 50#int(np.log(T))#/ (2 * alpha * np.log(1/rho)))
+    hmax = 6#int(np.log(T))#/ (2 * alpha * np.log(1/rho)))
     gfun = lambda x : (1/sigma) * x
     opt = OptimizerOptions(GaussianKernel(sigma), v_1 = v_1, rho = rho,\
         sigma = sigma, lam = lam, delta=delta,\
@@ -231,10 +235,10 @@ def get_hartmann6_config():
             'sigma' : sigma,
             'lam' : lam,
             'alpha' : alpha,
-            'kernel' : RBF(sigma),
+            'kernel' : GaussianKernel(sigma),
             'options' : opt,
             'N' : N,
-            'hmax' : hmax
+            'hmax' : 12
         },
         'bkb_params' : {
             'sigma' : sigma,
@@ -303,7 +307,7 @@ def get_sixhumpcamel_config():
             'sigma' : sigma,
             'lam' : lam,
             'alpha' : alpha,
-            'kernel' : RBF(sigma),
+            'kernel' : GaussianKernel(sigma),
             'options' : opt,
             'N' : N,
             'hmax' : hmax
@@ -376,7 +380,7 @@ def get_levy8_config():
             'sigma' : sigma,
             'lam' : lam,
             'alpha' : alpha,
-            'kernel' : RBF(sigma),
+            'kernel' : GaussianKernel(sigma),
             'options' : opt,
             'N' : N,
             'hmax' : hmax
@@ -432,23 +436,23 @@ if __name__ == '__main__':
     sixhumpcamel_config = get_sixhumpcamel_config()
     lev8_config = get_levy8_config()
 
-    #write_exp_info(hartmann_config)
-
-    #adabkb_test(hartmann_config) 
-    #adagpucb_test(hartmann_config)
-    #bkb_test(hartmann_config)
-    #gpucb_test(hartmann_config)
-
-    #write_exp_info(sixhumpcamel_config)
-    adabkb_test(sixhumpcamel_config) 
-    adagpucb_test(sixhumpcamel_config)
-    bkb_test(sixhumpcamel_config)
-    gpucb_test(sixhumpcamel_config)
+#    write_exp_info(sixhumpcamel_config)
+#    adabkb_test(sixhumpcamel_config) 
+#    adagpucb_test(sixhumpcamel_config)
+#    bkb_test(sixhumpcamel_config)
+#    gpucb_test(sixhumpcamel_config)
 
 
-   # write_exp_info(lev8_config)
-    #adabkb_test(lev8_config) 
-    #adagpucb_test(lev8_config)
-    #bkb_test(lev8_config)
-    #gpucb_test(lev8_config)
+    write_exp_info(hartmann_config)
+    adabkb_test(hartmann_config) 
+    adagpucb_test(hartmann_config)
+    bkb_test(hartmann_config)
+    gpucb_test(hartmann_config)
+
+
+#    write_exp_info(lev8_config)
+#    adabkb_test(lev8_config) 
+#    adagpucb_test(lev8_config)
+#    bkb_test(lev8_config)
+#    gpucb_test(lev8_config)
     

@@ -3,8 +3,8 @@ import time
 import numpy as np
 import itertools as it
 
-from adabkb.benchmark_functions.benchmark_functions import *
-from adabkb.benchmark_functions.other_methods import *
+from benchmark_functions.benchmark_functions import *
+from benchmark_functions.other_methods import *
 
 from sklearn.gaussian_process.kernels import RBF
 from adabkb.options import OptimizerOptions
@@ -1400,7 +1400,7 @@ if __name__ == '__main__':
     ack30_config = get_ackley30_config()
 
     execute_experiments ([
-     #  branin_config, 
+      branin_config, 
     #   ackley2_config, 
     #   beale_config, 
     #   bohachevsky_config, 
@@ -1411,5 +1411,5 @@ if __name__ == '__main__':
     #    lev6_config,
     #    ras8_config,
     #    dix10_config,
-    ack30_config
-     ])
+    #ack30_config
+    ])

@@ -107,14 +107,14 @@ def plot_ris(title, fun_name, datas, path, xlab, ylab, out, loc, cut=None, yscal
         ax.axvline(x=cut,linestyle='--',color="red", alpha=0.4)
     ax.legend(loc=loc)#"upper right")
     fig.tight_layout()
-    plt.savefig(path + out, transparent=True, bbox_inches="tight", pad_inches=0)#"/average_regret.png")
+    plt.savefig(path + out, transparent=True, bbox_inches="tight")#"/average_regret.pdf")
     plt.close(fig)
 
 def plot_regret(fun_name, datas, cut, path):
-    plot_ris("Average Regret", fun_name, datas, path, "$t$", "avg $R_t$", "/average_regret.png", "upper right", cut, "log")
+    plot_ris("Average Regret", fun_name, datas, path, "$t$", "avg $R_t$", "/average_regret.pdf", "best", cut, "log")
 
 def plot_ctime(fun_name, datas, cut, path):
-    plot_ris("Cumulative Time", fun_name, datas, path, "$t$", "time (s)", "/cumulative_time.png", "lower right", cut, "log")
+    plot_ris("Cumulative Time", fun_name, datas, path, "$t$", "time (s)", "/cumulative_time.pdf", "lower right", cut, "log")
 
 
 if __name__ == "__main__":
@@ -131,11 +131,11 @@ if __name__ == "__main__":
     print("gmin: {}".format(args.global_min))
     
     reg_datas =[
-        ("adabkb", adabkb_results[0], adabkb_results[1], "orange"),
+   #     ("adabkb", adabkb_results[0], adabkb_results[1], "orange"),
 #        ("bkb", bkb_results[0], bkb_results[1]),
     ]
     time_data =[
-        ("adabkb", adabkb_results[2], adabkb_results[3], "orange"),
+#        ("adabkb", adabkb_results[2], adabkb_results[3], "orange"),
 #        ("bkb", bkb_results[2], bkb_results[3]),
     ]
 
@@ -150,6 +150,9 @@ if __name__ == "__main__":
         reg_datas.append(("rndbkb[size={}]".format(size), rndbkb_results[0], rndbkb_results[1], colors[i]))
         time_data.append(("rndbkb[size={}]".format(size), rndbkb_results[2], rndbkb_results[3], colors[i]))
         i+=1
+
+    reg_datas.append( ("adabkb", adabkb_results[0], adabkb_results[1], "orange"))
+    time_data.append( ("adabkb", adabkb_results[2], adabkb_results[3], "orange"))
 
     plot_regret(args.funname, reg_datas, adabkb_results[-1], args.path)
     plot_ctime(args.funname, time_data, adabkb_results[-1], args.path)

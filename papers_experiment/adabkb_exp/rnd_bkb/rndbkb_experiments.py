@@ -18,7 +18,7 @@ np.random.seed(12)
 
 trials = 5
 alpha = 1.0
-T = 699
+T = 700
 D = 6
 delta = 1e-5
 fnorm = 1.0
@@ -29,14 +29,7 @@ time_threshold = 600
 
 DELIM = "-----"
 
-ack2_fun = Ackley(2, (0.01, np.random.RandomState(seed)))
 bra_fun = Branin((0.01, np.random.RandomState(seed)))
-bea_fun = Beale((0.01, np.random.RandomState(seed)))
-boh_fun = Bohachevsky((0.01, np.random.RandomState(seed)))
-shk_fun = Shekel((0.01, np.random.RandomState(seed)))
-ros_fun = Rosenbrock(2, (0.01, np.random.RandomState(seed)))
-tri2_fun = Trid(2, (0.01, np.random.RandomState(seed))) 
-hart3_fun = Hartmann3((0.01, np.random.RandomState(seed)))
 tri4_fun = Trid(4, (0.01, np.random.RandomState(seed))) 
 hman6_fun = Hartmann6((0.01, np.random.RandomState(seed)))
 ras8_fun = Rastrigin(8, (0.01, np.random.RandomState(seed)))
@@ -289,7 +282,7 @@ def get_ras8_config():
     rho = N ** (-1/np.sqrt(d))
     hmax = 10#6 #int(np.log(T)/(2*alpha*np.log(1/rho)))
     gfun = lambda x : (1/sigma) * x
-    opt = OptimizerOptions(gfun, v_1 = v_1, rho = rho,\
+    opt = OptimizerOptions(GaussianKernel(sigma), v_1 = v_1, rho = rho,\
         sigma = sigma, lam = lam,  delta=delta,\
         fnorm=fnorm, qbar=qbar, seed=seed)
     arm_set = np.array(
@@ -306,7 +299,7 @@ def get_ras8_config():
             'sigma' : sigma,
             'lam' : lam,
             'alpha' : alpha,
-            'kernel' : RBF(sigma),
+            'kernel' : GaussianKernel(sigma),
             'options' : opt,
             'N' : N,
             'hmax' : hmax 
@@ -344,7 +337,7 @@ if __name__ == '__main__':
     
     execute_experiments ([
        branin_config,
-        trid4_config,
+       trid4_config,
        hart6_config,
-        ras8_config
+       ras8_config
     ])

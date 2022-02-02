@@ -81,18 +81,19 @@ def plot_ris(title, fun_name, datas, path, xlab, ylab, out, loc, cut=None, yscal
     if cut is not None and cut>0:
         ax.axvline(x=cut,linestyle='--',color="red", alpha=0.4)
     ax.legend(loc=loc)#"upper right")
+    ax.set_ylim(bottom=0)
     fig.tight_layout()
-    plt.savefig(path + out, transparent=True, bbox_inches="tight", pad_inches=0)#"/average_regret.png")
+    plt.savefig(path + out, transparent=True, bbox_inches="tight")#"/average_regret.pdf")
     plt.close(fig)
 
 def plot_regret(fun_name, datas, cut, path):
-    plot_ris("Average Regret", fun_name, datas, path, "$t$", "avg $R_t$", "/average_regret.png", "upper right", cut, "log")
+    plot_ris("Average Regret", fun_name, datas, path, "$t$", "avg $R_t$", "/average_regret.pdf", "upper right", cut, "log")
 
 def plot_ctime(fun_name, datas, cut, path):
-    plot_ris("Cumulative Time", fun_name, datas, path, "$t$", "time (s)", "/cumulative_time.png", "lower right", cut, "log")
+    plot_ris("Cumulative Time", fun_name, datas, path, "$t$", "time (s)", "/cumulative_time.pdf", "lower right", cut, "log")
 
 def plot_lset(fun_name, datas, cut, path):
-    plot_ris("Leaf set Size", fun_name, datas, path, "$t$", "$|L_t|$", "/leaf_set_size.png", "upper right", cut)
+    plot_ris("Leaf set Size", fun_name, datas, path, "$t$", "$|L_t|$", "/leaf_set_size.pdf", "upper right", cut)
 
 
 if __name__ == "__main__":

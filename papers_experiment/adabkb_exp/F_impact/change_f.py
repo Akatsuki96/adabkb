@@ -30,14 +30,7 @@ F_values = [0.5, 1.0, 2.0, 3.0, 4.0, 5.0]
 
 DELIM = "-----"
 
-ack2_fun = Ackley(2, (0.01, np.random.RandomState(seed)))
 bra_fun = Branin((0.01, np.random.RandomState(seed)))
-bea_fun = Beale((0.01, np.random.RandomState(seed)))
-boh_fun = Bohachevsky((0.01, np.random.RandomState(seed)))
-shk_fun = Shekel((0.01, np.random.RandomState(seed)))
-ros_fun = Rosenbrock(2, (0.01, np.random.RandomState(seed)))
-tri2_fun = Trid(2, (0.01, np.random.RandomState(seed))) 
-hart3_fun = Hartmann3((0.01, np.random.RandomState(seed)))
 tri4_fun = Trid(4, (0.01, np.random.RandomState(seed))) 
 hman6_fun = Hartmann6((0.01, np.random.RandomState(seed)))
 ras8_fun = Rastrigin(8, (0.01, np.random.RandomState(seed)))

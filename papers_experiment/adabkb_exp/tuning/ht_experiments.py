@@ -13,7 +13,7 @@ from falkon.kernels import GaussianKernel
 from falkon.options import FalkonOptions
 
 from adabkb.optimizer import AdaBKB
-from adabkb.other_methods import Bkb, AdaGpucb 
+from benchmark_functions.other_methods import Bkb, AdaGpucb 
 from adabkb.options import OptimizerOptions
 from adabkb.utils import GreedyExpansion
 

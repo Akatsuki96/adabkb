@@ -140,22 +140,23 @@ def plot_ris(title, fun_name, datas, path, xlab, ylab, out, loc, cut=None, yscal
     for (label, data, conf) in datas:
         ax.plot(range(len(data)), data, '-', c=COLORS[label], label=label)
         if conf is not None:
-            ax.fill_between(range(len(data)), conf[1], conf[0], alpha=0.8, color=COLORS[label])
+            ax.fill_between(range(len(data)), conf[1], conf[0], alpha=0.6, color=COLORS[label])
     if cut is not None and cut>0:
         ax.axvline(x=cut,linestyle='--',color="red", alpha=0.4)
     ax.legend(loc=loc)#"upper right")
+    ax.set_ylim(bottom=0)
     fig.tight_layout()
-    plt.savefig(path + out, transparent=True, bbox_inches="tight", pad_inches=0)#"/average_regret.png")
+    plt.savefig(path + out, transparent=True, bbox_inches="tight")#"/average_regret.png")
     plt.close(fig)
 
 def plot_regret(fun_name, datas, cut, path):
-    plot_ris("Average Regret", fun_name, datas, path, "$t$", "avg $R_t$", "/average_regret.png", "upper right", cut)
+    plot_ris("Average Regret", fun_name, datas, path, "$t$", "avg $R_t$", "/average_regret.pdf", "upper right", cut)
 
 def plot_ctime(fun_name, datas, cut, path):
-    plot_ris("Cumulative Time", fun_name, datas, path, "$t$", "time (s)", "/cumulative_time.png", "lower right", cut, "log")
+    plot_ris("Cumulative Time", fun_name, datas, path, "$t$", "time (s)", "/cumulative_time.pdf", "lower right", cut, "log")
 
 def plot_lset(fun_name, datas, cut, path):
-    plot_ris("Leaf set Size", fun_name, datas, path, "$t$", "$|L_t|$", "/leafset_size.png", "upper right", cut, "log")
+    plot_ris("Leaf set Size", fun_name, datas, path, "$t$", "$|L_t|$", "/leafset_size.pdf", "upper right", cut, "log")
 
 
 if __name__ == "__main__":
@@ -184,8 +185,8 @@ if __name__ == "__main__":
         ("adabkb", adabkb_results[2], adabkb_results[3])
     ]
     lset_data = [
-        ("adabkb", adabkb_results[4], adabkb_results[5]),
-        ("adagpucb", adagpucb_results[4], adagpucb_results[5]) 
+        ("adagpucb", adagpucb_results[4], adagpucb_results[5]),
+        ("adabkb", adabkb_results[4], adabkb_results[5])
     ]
     #def plot_ris(title, fun_name, datas, cut, path, xlab, ylab, out, loc, yscale = None):
     plot_regret(args.funname, reg_datas, adabkb_results[-1], args.path)

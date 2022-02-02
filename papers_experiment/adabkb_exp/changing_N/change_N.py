@@ -1,10 +1,14 @@
 import os
 import time
 import numpy as np
+import sys
+
+sys.path.insert(0, '../')
+
 import itertools as it
-from adabkb.benchmark_functions.benchmark_functions import *
-from adabkb.benchmark_functions.other_methods import *
-from sklearn.gaussian_process.kernels import RBF
+from benchmark_functions.benchmark_functions import *
+from benchmark_functions.other_methods import *
+from adabkb.kernels import GaussianKernel
 from adabkb.options import OptimizerOptions
 
 from adabkb.optimizer import AdaBKB
@@ -23,24 +27,14 @@ qbar = 5
 time_threshold = 600
 
 F = 1.0
-F_values = [3, 5, 7, 9, 11, 13]
+F_values = [3, 5, 7, 9]
 
 DELIM = "-----"
 
-ack2_fun = Ackley(2, (0.01, np.random.RandomState(seed)))
-ack3_fun = Ackley(3, (0.001, np.random.RandomState(seed)))
-ack4_fun = Ackley(4, (0.001, np.random.RandomState(seed)))
-ack30_fun = Ackley(30, (0.001, np.random.RandomState(seed)))
-bra_fun = Branin((0.01, np.random.RandomState(seed)))
+bra_fun = Branin((0.0001, np.random.RandomState(seed)))
 bea_fun = Beale((0.01, np.random.RandomState(seed)))
 boh_fun = Bohachevsky((0.01, np.random.RandomState(seed)))
-shk_fun = Shekel((0.01, np.random.RandomState(seed)))
-ros_fun = Rosenbrock(2, (0.01, np.random.RandomState(seed)))
-tri2_fun = Trid(2, (0.01, np.random.RandomState(seed))) 
-hart3_fun = Hartmann3((0.01, np.random.RandomState(seed)))
 tri4_fun = Trid(4, (0.0001, np.random.RandomState(seed))) 
-hman6_fun = Hartmann6((0.01, np.random.RandomState(seed)))
-ras8_fun = Rastrigin(8, (0.01, np.random.RandomState(seed)))
 
 def end_trace(fpath):
     with open(fpath, "a") as f:
@@ -92,6 +86,9 @@ def adabkb_test(config, F_value):
         creg = []
         tot_time = time.time()
         adabkb_config['options'].fnorm = 1.0#F_value
+        adabkb_config['options'].v_1 = F_value * np.sqrt(fun.search_space.shape[0])
+        adabkb_config['options'].rho = F_value **(-1/fun.search_space.shape[0]) 
+
         adabkb = AdaBKB(adabkb_config['options'])
         #    def initialize(self, search_space, N : int = 2, h_max : int = 100):
         adabkb.initialize(fun.search_space, adabkb_config['N'], adabkb_config['hmax'])
@@ -101,7 +98,7 @@ def adabkb_test(config, F_value):
             yt = -fun(xt)
             adabkb.update_model(node_id, yt)
             tm = time.time() - tm
-            print("[--] t: {}/{}\txt: {}\tyt: {}\t|L_t|: {}".format(t, T, xt, -yt, len(adabkb.leaf_set)))
+            print("[N = {}] t: {}/{}\txt: {}\tyt: {}\t|L_t|: {}".format(adabkb_config['N'], t, T, xt, -yt, len(adabkb.leaf_set)))
             write_log("./out/{}/AdaBKB_{}/trace.log".format(fun.name, F_value), nfree_fun(xt), tm, len(adabkb.leaf_set), adabkb.pruned, adabkb.estop)
             creg.append(nfree_fun(xt) - fun.global_min[1])
             ct.append(tm)
@@ -111,17 +108,64 @@ def adabkb_test(config, F_value):
         cregs.append(creg)
         end_trace("./out/{}/AdaBKB_{}/trace.log".format(fun.name,F_value))
 
+def get_beale_config():
+    sigma = 0.50
+    lam = 1e-3
+    hmax = 3
+    opt = OptimizerOptions(GaussianKernel(sigma), v_1 = 1.0, rho = 1.0,\
+        sigma = sigma, lam = lam,  delta=delta,\
+        fnorm=fnorm, qbar=qbar, seed=seed)
+    return {
+        'trials' : trials,
+        'T' : T,
+        'fun' : bea_fun,
+        'nfree_fun' : Beale(),
+        'search_space': bea_fun.search_space,
+        'adabkb_params' : {
+            'sigma' : sigma,
+            'lam' : lam,
+            'alpha' : alpha,
+            'kernel' : GaussianKernel(sigma),
+            'options' : opt,
+            'hmax' : hmax,
+            'fnorm' : fnorm,
+            'random_state' : np.random.RandomState(12),
+        }
 
+    }
+def get_boh_config():
+    sigma = 0.75 #0.5
+    lam = 1e-3
+    hmax = 2
+    opt = OptimizerOptions(GaussianKernel(sigma), v_1 = 1.0, rho = 1.0,\
+        sigma = sigma, lam = lam,  delta=delta,\
+        fnorm=fnorm, qbar=qbar, seed=seed)
+    return {
+        'trials' : trials,
+        'T' : 5000,
+        'fun' : boh_fun,
+        'nfree_fun' : Bohachevsky(),
+        'search_space': boh_fun.search_space,
+        'adabkb_params' : {
+            'sigma' : sigma,
+            'lam' : lam,
+            'alpha' : alpha,
+            'kernel' : GaussianKernel(sigma),
+            'options' : opt,
+            'hmax' : hmax,
+            'fnorm' : fnorm,
+            'random_state' : np.random.RandomState(12),
+        }
+
+    }
 
 def get_branin_config():
     sigma = 0.50
     lam = 1e-3
     N = 3
-    v_1 =  N * np.sqrt(1/2)
-    rho = N ** (-1/np.sqrt(2))
-    hmax = 5
-    gfun = lambda x : (1/sigma) * x
-    opt = OptimizerOptions(GaussianKernel(sigma), v_1 = v_1, rho = rho,\
+    hmax = 6
+    gfun = lambda x : np.sqrt(2)/(sigma) * x
+    opt = OptimizerOptions(GaussianKernel(sigma), v_1 = 1.0, rho = 1.0,\
         sigma = sigma, lam = lam,  delta=delta,\
         fnorm=fnorm, qbar=qbar, seed=seed)
     return {
@@ -134,7 +178,7 @@ def get_branin_config():
             'sigma' : sigma,
             'lam' : lam,
             'alpha' : alpha,
-            'kernel' : RBF(sigma),
+            'kernel' : GaussianKernel(sigma),
             'options' : opt,
             'N' : N,
             'hmax' : hmax,
@@ -147,117 +191,16 @@ def get_branin_config():
 
     }
 
-def get_ackley30_config():
-    sigma = 20.50
-    lam = 1e-7
-    N = 1
-    v_1 =  N * np.sqrt(1/30)
-    rho = N ** (-1/np.sqrt(30))
-    hmax = 300
-    gfun = lambda x : (1/sigma) * x
-    opt = OptimizerOptions(GaussianKernel(sigma), v_1 = v_1, rho = rho,\
-        sigma = sigma, lam = lam,  delta=delta,\
-        fnorm=fnorm, qbar=qbar, seed=seed)
-    return {
-        'trials' : trials,
-        'T' : T,
-        'fun' : ack30_fun,
-        'nfree_fun' : Ackley(30, (0.0, None)),
-        'search_space': ack30_fun.search_space,
-        'adabkb_params' : {
-            'sigma' : sigma,
-            'lam' : lam,
-            'alpha' : alpha,
-            'kernel' : RBF(sigma),
-            'options' : opt,
-            'N' : N,
-            'hmax' : hmax,
-            'fnorm' : fnorm,
-            'noise_variance' : lam**2,
-            'delta' : delta,
-            'random_state' : np.random.RandomState(12),
-            'qbar' : qbar
-        }
-
-    }
-
-def get_ackley3_config():
-    sigma = 1.50
-    lam = 1e-10
-    N = 1
-    v_1 =  N * np.sqrt(1/30)
-    rho = N ** (-1/np.sqrt(30))
-    hmax = 10
-    gfun = lambda x : (1/sigma) * x
-    opt = OptimizerOptions(GaussianKernel(sigma), v_1 = v_1, rho = rho,\
-        sigma = sigma, lam = lam,  delta=delta,\
-        fnorm=fnorm, qbar=qbar, seed=seed)
-    return {
-        'trials' : trials,
-        'T' : T,
-        'fun' : ack3_fun,
-        'nfree_fun' : Ackley(3, (0.0, None)),
-        'search_space': ack3_fun.search_space,
-        'adabkb_params' : {
-            'sigma' : sigma,
-            'lam' : lam,
-            'alpha' : alpha,
-            'kernel' : RBF(sigma),
-            'options' : opt,
-            'N' : N,
-            'hmax' : hmax,
-            'fnorm' : fnorm,
-            'noise_variance' : lam**2,
-            'delta' : delta,
-            'random_state' : np.random.RandomState(12),
-            'qbar' : qbar
-        }
-
-    }
-
-def get_ackley4_config():
-    sigma = 0.50
-    lam = 1e-3
-    N = 1
-    v_1 =  N * np.sqrt(1/4)
-    rho = N ** (-1/np.sqrt(4))
-    hmax = 10
-    gfun = lambda x : (1/sigma) * x
-    opt = OptimizerOptions(GaussianKernel(sigma), v_1 = v_1, rho = rho,\
-        sigma = sigma, lam = lam,  delta=delta,\
-        fnorm=fnorm, qbar=qbar, seed=seed)
-    return {
-        'trials' : trials,
-        'T' : T,
-        'fun' : ack4_fun,
-        'nfree_fun' : Ackley(4, (0.0, None)),
-        'search_space': ack4_fun.search_space,
-        'adabkb_params' : {
-            'sigma' : sigma,
-            'lam' : lam,
-            'alpha' : alpha,
-            'kernel' : RBF(sigma),
-            'options' : opt,
-            'N' : N,
-            'hmax' : hmax,
-            'fnorm' : fnorm,
-            'noise_variance' : lam**2,
-            'delta' : delta,
-            'random_state' : np.random.RandomState(12),
-            'qbar' : qbar
-        }
-
-    }
 
 def get_trid4_config():
-    sigma = 10.75
+    sigma = 2.75
     sigma_disc = 10.75
-    lam = 1e-7
+    lam = 1e-8
     C1 = 1.0#5e-6 #6e-6
     N = 13
     v_1 =  1 * np.sqrt(1/4)
     rho = 1 ** (-1/np.sqrt(4))
-    hmax = 30 #int(np.log(T)/(2*alpha*np.log(1/rho)))
+    hmax = 7 #int(np.log(T)/(2*alpha*np.log(1/rho)))
     gfun = lambda x : (1/sigma) * x
     opt = OptimizerOptions(GaussianKernel(sigma), v_1 = v_1, rho = rho,\
         sigma = sigma, lam = lam,  delta=delta,\
@@ -273,7 +216,7 @@ def get_trid4_config():
             'sigma' : sigma,
             'lam' : lam,
             'alpha' : alpha,
-            'kernel' : RBF(sigma),
+            'kernel' : GaussianKernel(sigma),
             'options' : opt,
             'N' : N,
             'hmax' : hmax
@@ -281,65 +224,6 @@ def get_trid4_config():
     }
 
 
-def get_hartmann6_config():
-    sigma = 1.50
-    lam = 1e-3
-    C1 = 2.0#5e-6 #6e-6
-    N = 5
-    v_1 = np.sqrt(1/6)
-    rho = 1#(-1/np.sqrt(2))
-    hmax = 90#int(np.log(T))#/ (2 * alpha * np.log(1/rho)))
-    gfun = lambda x : (1/sigma) * x
-    opt = OptimizerOptions(GaussianKernel(sigma), v_1 = v_1, rho = rho,\
-        sigma = sigma, lam = lam,  delta=delta,\
-        fnorm=fnorm, qbar=qbar, seed=seed)
-    return {
-        'trials' : trials,
-        'T' : T,
-        'fun' : hman6_fun,
-        'nfree_fun' : Hartmann6(),
-        'search_space': hman6_fun.search_space,
-        'adabkb_params' : {
-            'sigma' : sigma,
-            'lam' : lam,
-            'alpha' : alpha,
-            'kernel' : RBF(sigma),
-            'options' : opt,
-            'N' : N,
-            'hmax' : hmax
-        }
-    }
-
-def get_ras8_config():
-    sigma = 15.0
-    sigma_dist = 7.0
-    lam = 1e-9
-    C1 = 1.0
-    N = 3
-    d = 8
-    v_1 =  1 * np.sqrt(1/d)
-    rho = 1 ** (-1/np.sqrt(d))
-    hmax = 20#6 #int(np.log(T)/(2*alpha*np.log(1/rho)))
-    gfun = lambda x : (1/sigma) * x
-    opt = OptimizerOptions(GaussianKernel(sigma), v_1 = v_1, rho = rho,\
-        sigma = sigma, lam = lam,  delta=delta,\
-        fnorm=fnorm, qbar=qbar, seed=seed)
-    return {
-        'trials' : trials,
-        'T' : T,
-        'fun' : ras8_fun,
-        'nfree_fun' : Rastrigin(8),
-        'search_space': ras8_fun.search_space,
-        'adabkb_params' : {
-            'sigma' : sigma,
-            'lam' : lam,
-            'alpha' : alpha,
-            'kernel' : RBF(sigma),
-            'options' : opt,
-            'N' : N,
-            'hmax' : hmax 
-        }
-    }
 
 def execute_experiments(configs):
     for config in configs:
@@ -353,19 +237,12 @@ if __name__ == '__main__':
     
     branin_config = get_branin_config()
     trid4_config = get_trid4_config()
-    ack4_config = get_ackley4_config()
-    ack3_config = get_ackley3_config()
-    hart6_config = get_hartmann6_config()
-    ras8_config = get_ras8_config()
-    ack30_config = get_ackley30_config()
+    bea_config = get_beale_config()
+    boh_config = get_boh_config()
     
     execute_experiments ([
-        #branin_config,
-        #trid4_config,
-        ack3_config,
-        #ack4_config,
-        #hart6_config,
-        #ack7_config,
-        #ras8_config,
-        #ack30_config
+        branin_config,
+        trid4_config,
+        bea_config,
+        boh_config
     ])
