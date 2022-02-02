@@ -1,0 +1,28 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+- family-names: "Rando"
+  given-names: "Marco"
+- family-names: "Carratino"
+  given-names: "Luigi"
+- family-names: "Villa"
+  given-names: "Silvia"
+- family-names: "Rosasco"
+  given-names: "Lorenzo"
+title: "Ada-BKB: Scalable Gaussian Process Optimization on Continuous Domain by Adaptive Discretization"
+version: 1.0.0
+preferred-citation:
+  type: article
+  authors:
+  - family-names: "Rando"
+    given-names: "Marco"
+  - family-names: "Carratino"
+    given-names: "Luigi"
+  - family-names: "Villa"
+    given-names: "Silvia"
+  - family-names: "Rosasco"
+    given-names: "Lorenzo"
+  url: "https://arxiv.org/abs/2106.08598"
+  title: "Ada-BKB: Scalable Gaussian Process Optimization on Continuous Domain by Adaptive Discretization"
+  year: 2021
+  
