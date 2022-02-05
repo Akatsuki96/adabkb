@@ -6,6 +6,7 @@ from adabkb.optimizer import AbsOptimizer
 from scipy.linalg import solve_triangular, svd, qr, LinAlgError
 from adabkb.utils import diagonal_dot, stable_invert_root, PartitionTreeNode
 
+from adabkb.options import OptimizerOptions
 
 class AdaBKB(AbsOptimizer):
 
@@ -20,7 +21,12 @@ class AdaBKB(AbsOptimizer):
     @property
     def sigma(self):
         return self.options.sigma
-    
+
+    def __init__(self, options: OptimizerOptions = None):
+        super().__init__(options)
+        self.tau = 0 
+
+
     def _evaluate_model(self, Xstar):
         K_sm = self.dot(Xstar, self.active_set)
         Xstar_embedded = K_sm.dot(self.U_thin * self.S_thin_inv_sqrt.T)
@@ -45,23 +51,15 @@ class AdaBKB(AbsOptimizer):
         self.m = len(self.S_thin_inv_sqrt)
 
     def _update_variances(self, idx_to_update=None):
-        if idx_to_update is None:
-            temp = solve_triangular(self.R,
-                                    (self.X_embedded.dot(self.Q)).T,
-                                    overwrite_b=True,
-                                    check_finite=False).T
-            temp *= self.X_embedded
-            self.variances = (self.X_norms - self.X_norms_embedded) / self.lam + np.sum(temp, axis=1)
-        else:
-            temp = solve_triangular(self.R,
-                                    (self.X_embedded[idx_to_update, :].dot(self.Q)).T,
-                                    overwrite_b=True,
-                                    check_finite=False).T
-            temp *= self.X_embedded[idx_to_update, :]
-            self.variances[idx_to_update] = (
-                    (self.X_norms[idx_to_update] - self.X_norms_embedded[idx_to_update]) / self.lam
-                    + np.sum(temp, axis=1)
-            )
+        temp = solve_triangular(self.R,
+                                (self.X_embedded[idx_to_update, :].dot(self.Q)).T,
+                                overwrite_b=True,
+                                check_finite=False).T
+        temp *= self.X_embedded[idx_to_update, :]
+        self.variances[idx_to_update] = (
+                (self.X_norms[idx_to_update] - self.X_norms_embedded[idx_to_update]) / self.lam
+                + np.sum(temp, axis=1)
+        )
         assert np.all(self.variances >= 0.)
         assert np.all(np.isfinite(self.variances))
 
@@ -76,10 +74,7 @@ class AdaBKB(AbsOptimizer):
         self.Q, self.R = qr(self.A)
 
         self.w = solve_triangular(self.R, self.Q.T.dot(pulled_arms_matrix.T.dot(self.Y[self.pulled_arms_count != 0])))
-        if idx_to_update is None:
-            self.means = self.X_embedded.dot(self.w)
-        else:
-            self.means[idx_to_update] = self.X_embedded[idx_to_update, :].dot(self.w)
+        self.means[idx_to_update] = self.X_embedded[idx_to_update, :].dot(self.w)
         assert np.all(np.isfinite(self.means))
 
         self._update_variances(idx_to_update)
@@ -92,34 +87,26 @@ class AdaBKB(AbsOptimizer):
 
     def _update_model(self, indices, ys, init_phase : bool = False):
         
-        if self.verbose:
-            tictoc = TicToc()
-            tictoc.tic()
         for i in range(len(indices)):
             self.Y[indices[i]] += ys[i]
             self.pulled_arms_count[indices[i]] += 1
-        if not init_phase:
+        if self.tau > 0:
             self._resample_dict()
         self._update_embedding()
-        if init_phase:
+        if len(self.leaf_set) == 1 and self.leaf_set[0].level == 0:
             self._update_mean_variances(idx_to_update=[0])
         else:
             to_upd = np.concatenate(
                 [
                     [self._get_node_idx(node) for node in self.leaf_set],
-                    list(
-                        {self._get_node_idx(node.father) for node in self.leaf_set}
-                    ),
+                    [self._get_node_idx(node.father) for node in self.leaf_set],
                 ]
             )
 
             self._update_mean_variances(idx_to_update=to_upd)
         self._update_beta()
-        if not init_phase:
-          #  self._update_bkb_params()
+        if self.tau > 0:
             self._compute_index()
-        if self.verbose:
-            tictoc.toc('[--] update completed in')
         
     def update_model(self, idx, yt):
         self._update_model([idx], [yt], len(self.leaf_set) == 1 and self.cpruned == 0)
@@ -222,7 +209,7 @@ class AdaBKB(AbsOptimizer):
     def _can_be_expanded(self, node_idx, h, Vh):
         return np.sqrt(self.variances[node_idx]) * self.beta <= Vh and h < self.h_max
 
-    def _expand(self, leaf_idx, node_idx, first_expansion = False):
+    def _expand(self, leaf_idx, first_expansion = False):
         new_nodes = self.leaf_set[leaf_idx].expand_node()
         self.leaf_set = np.delete(self.leaf_set, leaf_idx, 0)
         self.I = np.delete(self.I, leaf_idx, 0)
@@ -262,7 +249,9 @@ class AdaBKB(AbsOptimizer):
             if not self._can_be_expanded(
                 node_idx, self.leaf_set[leaf_idx].level, Vh
             ):
+                self.tau+=1
                 return self.leaf_set[leaf_idx].x, node_idx
 
-            self._expand(leaf_idx, node_idx, len(self.leaf_set) == 1 and self.cpruned == 0)
+            self._expand(leaf_idx, len(self.leaf_set) == 1 and self.cpruned == 0)
             self._prune_leafset()
+            self.tau += 1
