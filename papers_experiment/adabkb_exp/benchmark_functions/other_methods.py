@@ -6,6 +6,7 @@ from sklearn.utils.extmath import fast_logdet
 #from utils import diagonal_dot, stable_invert_root
 import time
 from adabkb.utils import *
+from .utils import flatten_list
 import torch
 import gpytorch
 from sklearn.gaussian_process import GaussianProcessRegressor
