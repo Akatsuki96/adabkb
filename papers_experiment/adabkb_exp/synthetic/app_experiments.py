@@ -1110,7 +1110,7 @@ def get_ackley30_config():
     N = 3
     v_1 =  1 * np.sqrt(1/30)
     rho = 1 ** (-1/np.sqrt(30))
-    hmax = 200 #int(np.log(T)/(2*alpha*np.log(1/rho)))
+    hmax = 120 #int(np.log(T)/(2*alpha*np.log(1/rho)))
     gfun = lambda x : (1/sigma) * x
     opt = OptimizerOptions(GaussianKernel(sigma), v_1 = v_1, rho = rho,\
         sigma = sigma, lam = lam,  delta=delta,\
@@ -1375,8 +1375,8 @@ def get_dix10_config():
 
 def execute_experiments(configs):
     for config in configs:
-        t = time.time()
-     #   adabkb_test(config)
+     #   t = time.time()
+        adabkb_test(config)
      #   print("[--] End in: {}".format(round(time.time() - t,2))) 
         adagpucb_test(config)
       #  bkb_test(config)
@@ -1402,7 +1402,7 @@ if __name__ == '__main__':
     ack30_config = get_ackley30_config()
 
     execute_experiments ([
-      branin_config, 
+    #  branin_config, 
     #   ackley2_config, 
     #   beale_config, 
     #   bohachevsky_config, 
@@ -1413,5 +1413,5 @@ if __name__ == '__main__':
     #    lev6_config,
     #    ras8_config,
     #    dix10_config,
-    #ack30_config
+    ack30_config
     ])

@@ -3,7 +3,7 @@ from pytictoc import TicToc
 
 from adabkb.optimizer import AbsOptimizer
 
-from scipy.linalg import solve_triangular, svd, qr, LinAlgError
+from scipy.linalg import solve_triangular, svd, qr, LinAlgError, qr_update
 from adabkb.utils import diagonal_dot, stable_invert_root, PartitionTreeNode
 
 from adabkb.options import OptimizerOptions
@@ -25,7 +25,7 @@ class AdaBKB(AbsOptimizer):
     def __init__(self, options: OptimizerOptions = None):
         super().__init__(options)
         self.tau = 0 
-
+        self.Q, self.R = None, None
 
     def _evaluate_model(self, Xstar):
         K_sm = self.dot(Xstar, self.active_set)
@@ -69,9 +69,10 @@ class AdaBKB(AbsOptimizer):
         reweight_counts_vec = np.sqrt(self.pulled_arms_count[self.pulled_arms_count != 0].reshape(-1, 1))
 
         self.A = ((pulled_arms_matrix * reweight_counts_vec).T.dot(pulled_arms_matrix * reweight_counts_vec)
-                  + self.lam * np.eye(self.m))
+                + self.lam * np.eye(self.m))
 
         self.Q, self.R = qr(self.A)
+
 
         self.w = solve_triangular(self.R, self.Q.T.dot(pulled_arms_matrix.T.dot(self.Y[self.pulled_arms_count != 0])))
         self.means[idx_to_update] = self.X_embedded[idx_to_update, :].dot(self.w)
@@ -99,11 +100,10 @@ class AdaBKB(AbsOptimizer):
             to_upd = np.concatenate(
                 [
                     [self._get_node_idx(node) for node in self.leaf_set],
-                    [self._get_node_idx(node.father) for node in self.leaf_set],
+                    np.unique([self._get_node_idx(node.father) for node in self.leaf_set]),
                 ]
             )
-
-            self._update_mean_variances(idx_to_update=to_upd)
+            self._update_mean_variances( idx_to_update=to_upd)
         self._update_beta()
         if self.tau > 0:
             self._compute_index()
@@ -252,6 +252,6 @@ class AdaBKB(AbsOptimizer):
                 self.tau+=1
                 return self.leaf_set[leaf_idx].x, node_idx
 
-            self._expand(leaf_idx, len(self.leaf_set) == 1 and self.cpruned == 0)
+            self._expand(leaf_idx, len(self.leaf_set) == 1 and self.leaf_set[0].level == 0)
             self._prune_leafset()
             self.tau += 1

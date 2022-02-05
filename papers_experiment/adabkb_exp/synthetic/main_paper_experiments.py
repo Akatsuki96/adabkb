@@ -437,14 +437,14 @@ if __name__ == '__main__':
     lev8_config = get_levy8_config()
 
 #    write_exp_info(sixhumpcamel_config)
-    adabkb_test(sixhumpcamel_config) 
+#    adabkb_test(sixhumpcamel_config) 
 #    adagpucb_test(sixhumpcamel_config)
 #    bkb_test(sixhumpcamel_config)
 #    gpucb_test(sixhumpcamel_config)
 
 
 #    write_exp_info(hartmann_config)
-#    adabkb_test(hartmann_config) 
+    adabkb_test(hartmann_config) 
 #    adagpucb_test(hartmann_config)
 #    bkb_test(hartmann_config)
 #    gpucb_test(hartmann_config)
