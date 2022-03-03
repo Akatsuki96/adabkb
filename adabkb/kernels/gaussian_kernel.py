@@ -1,3 +1,4 @@
+import numpy as np
 from sklearn.gaussian_process.kernels import RBF
 
 class GaussianKernel(RBF):
@@ -5,4 +6,4 @@ class GaussianKernel(RBF):
         super().__init__(length_scale=length_scale, length_scale_bounds=length_scale_bounds)
 
     def confidence_function(self, x):
-        return (1/self.length_scale) * x
+        return np.sqrt(2)/self.length_scale * x

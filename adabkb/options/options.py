@@ -1,9 +1,8 @@
 import numpy as np
-from adabkb.utils import ExpansionProcedure, GreedyExpansion
+from adabkb.partition_tree import ExpansionProcedure, GreedyExpansion
 
 class OptimizerOptions:
     """Options of the optimizer.
-
     Parameters
     ----------
     expand_fun : ExpansionProcedure
@@ -30,41 +29,33 @@ class OptimizerOptions:
     qbar : float
         oversampling parameter. It must be > 0.   
     """
+    
+    # replace with model_options
+    #
+#
+    def __init__(self, model_options, 
+      # kernel
+      #  d : int,
+        expand_fun : ExpansionProcedure = GreedyExpansion(), 
+        v_1 : float = 1.0,
+        N : int = 3, 
+        rho : float = 0.5, 
+        h_max : int = 10,
+     #    
+     #    lam:float = 1e-5,\
+     #    noise_var : float = 1e-10,
+     #    delta:float=0.5,\
+     #    fnorm:float=1.0,\
+     #    qbar:int = 1,\
+     #    seed:int=42,\
 
-    def __init__(self,
-         kernel,\
-         expand_fun : ExpansionProcedure = GreedyExpansion(), 
-         v_1 : float = 1.0,\
-         rho : float = 0.5,\
-         sigma: float = 1.0,\
-         lam:float = 1e-5,\
-         delta:float=0.5,\
-         fnorm:float=1.0,\
-         qbar:int = 1,\
-         seed:int=42,\
-         ratio_threshold: int = 2,\
-         verbose : bool = False):
-        self.kernel = kernel
+         verbose : bool = False
+        ):
+       # self.kernel = kernel
+        self.model_options = model_options
         self.expand_fun = expand_fun
-        self.lam = lam
         self.v_1 = v_1
+        self.N = N
         self.rho = rho
-        self.sigma = sigma
+        self.h_max = h_max
         self.verbose = verbose
-        self.fnorm = fnorm
-        self.qbar = qbar
-        self.noise_var = lam**2
-        self.ratio_threshold = ratio_threshold
-        self.delta = delta
-        self.random_state = np.random.RandomState(seed)
-
-    def __str__(self):
-        return """
-        Parameters:\n
-        \t -) lambda  = {}\n
-        \t -) noise variance = {}\n
-        \t -) |f| = {}\n
-        \t -) qbar = {}\n
-        \t -) delta = {}
-        """.format(self.lam, self.noise_var, self.fnorm, self.qbar, self.delta)
-        

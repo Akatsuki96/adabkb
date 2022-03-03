@@ -2,4 +2,9 @@ wheel
 numpy
 scipy
 sklearn
+<<<<<<< HEAD
+matplotlib
+seaborn
+=======
 pytictoc
+>>>>>>> a82973072a828de84640becd1014a956bae86e78

@@ -4,7 +4,6 @@ from .expansion_procedure import ExpansionProcedure
 class PartitionTreeNode:
 
     """Implementation of a partition tree. It is used to explore the search space.
-
     Parameters
     ----------
     partition : numpy array
@@ -22,12 +21,7 @@ class PartitionTreeNode:
         function called when the node is expanded.  
     """
 
-    def __init__(self, partition : np.ndarray,\
-         N: int,\
-         father,\
-         level : int = 0,\
-         index : int = 0,\
-         expansion_procedure : ExpansionProcedure = ExpansionProcedure()):
+    def __init__(self, partition : np.ndarray, N: int, father, level : int = 0, index : int = 0, expansion_procedure : ExpansionProcedure = ExpansionProcedure()):
         self.partition = partition
         self.N = N
         self.index = index
@@ -51,7 +45,6 @@ class PartitionTreeNode:
 
     def expand_node(self):
         """function which creates and add children to the tree.
-
         Returns
         -------
         children : List<PartitionTreeNode>
@@ -70,3 +63,6 @@ class PartitionTreeNode:
         if isinstance(other_node, PartitionTreeNode):
             return np.all(self.partition == other_node.partition)
         return False
+    
+    def __hash__(self):
+        return hash(tuple(self.x))
