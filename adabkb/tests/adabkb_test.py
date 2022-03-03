@@ -32,7 +32,7 @@ v_1 = N * 2# np.sqrt(2)
 rho = 1/N
 h_max = 5
 
-T= 1000
+T= 700
 
 options = OptimizerOptions(model_options, v_1 = v_1, rho=rho, N = N, h_max = h_max)
 optimizer = AdaBKB(search_space, options)
@@ -51,6 +51,7 @@ for t in range(T):
     lset_size.append(optimizer.leaf_set.shape[0])
     node_idx = optimizer.get_node_idx(optimizer.leaf_set[idx])
     print("[--] xt: {}\tyt: {}\tmu: {}\tstd: {}\tlevel: {}\tbeta: {}\tVh: {}\t|L|: {}".format(node.x, yt, round(optimizer.means[node_idx], 2), round(optimizer.stds[node_idx],2), node.level, round(optimizer.beta, 5), round(optimizer.Vh[node.level],5), optimizer.leaf_set.shape[0]))
+    print("[--] emb size: {}".format(optimizer.model.embedding_size))
     optimizer.update([idx], node.x, yt[0])
     it_time = time.time() - it_time
     mean_it_time.append(it_time)
@@ -60,7 +61,9 @@ for t in range(T):
         print("[--] best observed: {}".format(optimizer.best_lcb))
         break
     
-print("[--] Mean time: {}s".format(round(np.mean(mean_it_time), 4)))
+print("[--] Mean time per iteration: {}s".format(round(np.mean(mean_it_time), 4)))
+print("[--] Tot time: {}s".format(round(np.sum(mean_it_time), 4)))
+
 mu, var = optimizer.model.predict(X) 
     
 fig, ax = plt.subplots()
