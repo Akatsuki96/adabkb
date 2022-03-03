@@ -4,16 +4,9 @@ from adabkb.utils import diagonal_dot
 from adabkb.options import OptimizerOptions
 
 
-<<<<<<< HEAD
 class AdaptiveOptimizer:
     
     def __init__(self, options):
-=======
-
-
-class AbsOptimizer:
-    def __init__(self, options: OptimizerOptions = None):
->>>>>>> a82973072a828de84640becd1014a956bae86e78
         self.options = options
         self.node2idx = {}
         self.num_nodes = 0

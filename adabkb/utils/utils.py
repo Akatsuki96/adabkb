@@ -1,7 +1,3 @@
-<<<<<<< HEAD
-
-=======
->>>>>>> a82973072a828de84640becd1014a956bae86e78
 import numpy as np
 
 def diagonal_dot(X, dot):
@@ -30,10 +26,4 @@ def stable_invert_root(U, S):
     S_thin_inv_root = (1 / np.sqrt(S_thin)).reshape(-1, 1)
 
     assert np.all(np.isfinite(S_thin_inv_root))
-
-<<<<<<< HEAD
     return U_thin, S_thin_inv_root
-=======
-    return U_thin, S_thin_inv_root
-
->>>>>>> a82973072a828de84640becd1014a956bae86e78

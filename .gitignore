@@ -1,11 +1,5 @@
-<<<<<<< HEAD
 */*.png
 **/out/*
 *.pyc
 build/*
 *.egg-info
-=======
-*/out/*
-*.png
-*.log
->>>>>>> safe_adabkb
