@@ -1,10 +1,5 @@
 from setuptools import setup, find_packages
 
-def get_requirements():
-    with open("./requirements.txt", "r") as f:
-        requirements = f.readlines()
-    return requirements
-
 
 setup(
     name="adabkb",
@@ -15,6 +10,6 @@ setup(
         'setuptools>=18.0'
     ],
     packages=find_packages(),
-    install_requires=get_requirements(),
+    install_requires=['wheel', 'numpy', 'scipy', 'sklearn',],
     include_package_data=True,
 )

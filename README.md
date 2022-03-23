@@ -4,15 +4,10 @@ Implementation of **Ada-BKB: Scalable Gaussian Process Optimization on Continuou
 A preprint of the paper can be found at the following link: https://arxiv.org/abs/2106.08598
 
 ## Install
-First, you need to install dependences and you can do it with
-```
-pip install -r requirements.txt
-```
-Then
+To install adabkb library, clone the repository and use pip
 ```
 pip install .
 ```
-To repeat paper experiments, other dependeces are needed. You can find the instruction to run paper experiments in *papers_experiment* folder
 
 ## Citation
 If you use this library, please cite it as below.

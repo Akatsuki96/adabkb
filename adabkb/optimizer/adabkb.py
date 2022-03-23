@@ -58,7 +58,6 @@ class AdaBKB(AdaptiveOptimizer):
         return self.g(self.options.v_1 * pow(self.options.rho, level))
 
     def __can_be_expanded(self, node_idx, level):
-  #      print(self.beta * self.stds[node_idx], self.Vh[level])
         return self.beta * self.stds[node_idx] <= self.Vh[level] and level < self.h_max
 
     def __select_candidate(self):
@@ -74,26 +73,11 @@ class AdaBKB(AdaptiveOptimizer):
         self.node_idx = np.concatenate((np.delete(self.node_idx, leaf_idx), nodes_idx))
         new_leaf_idx = list(range(self.leaf_set.shape[0] - len(children) , self.leaf_set.shape[0]))
         self.__update_I(new_leaf_idx)
-    #    self.__prune_leafset(np.asarray(new_leaf_idx))
-   #     print("-----------------------------------------------------")
-
     
     def __prune_leafset(self, leaf_idx):
                 
-        node_idx = self.node_idx[leaf_idx]
-        levels = np.asarray([node.level for node in self.leaf_set[leaf_idx]])
-
         subopt_partitions = (self.I[leaf_idx] < self.best_lcb[1]) & (self.node_idx[leaf_idx] != self.best_lcb[2])
         idx_to_erase = leaf_idx[subopt_partitions]
-#        idx_to_erase = idx_to_erase[self.node_idx[subopt_partitions] != self.best_lcb[2]]
-        
-        
-      #  print("[PRUNING] IDX: {}".format(leaf_idx))   
-      #  print("[--] node_idx: {}".format(self.node_idx[leaf_idx]))
-      #  print("[--] subopt: {}".format(subopt_partitions))
-      #  print("[--] best lcb: {}".format(self.best_lcb))
-     #   print("[--] SUBOPT: {}".format(subopt_partitions))
-      #  print("[--] idx to erase: {}".format(idx_to_erase)) 
         
         self.leaf_set = np.delete(self.leaf_set, idx_to_erase)
         self.I = np.delete(self.I, idx_to_erase)
@@ -104,13 +88,9 @@ class AdaBKB(AdaptiveOptimizer):
             leaf_idx = self.__select_candidate()
             node = self.leaf_set[leaf_idx]
             node_idx = self.get_node_idx(node)
-         #   print("[!!] SELECTED:  node: {}\tleaf: {}".format(node_idx, leaf_idx))
             if self.__can_be_expanded(node_idx, node.level) and (node.level > 0 or self.num_eval > 0):
-         #       print("-------------------- EXPAND ----------------")
                 self.__expand_leaf(node, leaf_idx, node_idx)
             else:
-                # Evaluation step
-         #       print("-------------------- EVAL ----------------")
                 return node, leaf_idx
 
     def __update_I(self, leaf_indices):

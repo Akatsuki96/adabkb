@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 print("---------------------------------------------------------------------------------------")
 init_time = time.time()
 
-fun = lambda x: -2*x**2 - 3*np.sin(x)
+fun = lambda x: -2*x**2 - 3*np.sin(3*x)
 
 search_space = np.array([[-1.0, 3.0]]).reshape(-1, 2)
 
@@ -18,7 +18,7 @@ X = np.linspace(-3, 6, 5000).reshape(-1, 1)
 y = fun(X)
 
 model_options = {
-    'kernel' : GaussianKernel(5.),
+    'kernel' : GaussianKernel(1.),
     'd' : 1,
     'lam' : 1e-3,
     'noise_variance' : 1e-4,
@@ -28,7 +28,7 @@ model_options = {
     'seed' : 12
 }
 N = 3
-v_1 = N * 2# np.sqrt(2) 
+v_1 = N #* np.sqrt(2) 
 rho = 1/N
 h_max = 5
 
@@ -47,7 +47,7 @@ mean_it_time = []
 for t in range(T):
     it_time = time.time()
     node, idx = optimizer.step()
-    yt = fun(node.x)
+    yt = fun(node.x) + np.random.randn(1, 1)[0]
     lset_size.append(optimizer.leaf_set.shape[0])
     node_idx = optimizer.get_node_idx(optimizer.leaf_set[idx])
     print("[--] xt: {}\tyt: {}\tmu: {}\tstd: {}\tlevel: {}\tbeta: {}\tVh: {}\t|L|: {}".format(node.x, yt, round(optimizer.means[node_idx], 2), round(optimizer.stds[node_idx],2), node.level, round(optimizer.beta, 5), round(optimizer.Vh[node.level],5), optimizer.leaf_set.shape[0]))
@@ -76,9 +76,11 @@ ax.plot(optimizer.best_lcb[0], fun(optimizer.best_lcb[0]), 'o', c="green")
 #ax.set_ylim([-5, 5])
 
 plt.savefig("adabkb_fun.pdf")
+plt.close(fig)
 
 fig, ax = plt.subplots()
 ax.set_title("AdaBKB lset size")
 ax.plot(range(len(lset_size)), lset_size, "-", color="black")
 
 plt.savefig("adabkb_lset.pdf")
+plt.close(fig)
