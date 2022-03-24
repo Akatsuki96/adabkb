@@ -19,20 +19,20 @@ model = BKB(kernel=kernel, d=1, lam=1e-5, noise_variance=1.0)
 model.initialize(Xb)
 print("[--] model.X: {}\tmodel.y: {}".format(model.X, model.y))
 
-model.full_update([0], yb.reshape(-1))
+model.full_update([0],  yb.reshape(-1))
 
-print("[--] model.X: {}\tmodel.y: {}\tmodel.mean: {}\tmodel.var: {}".format(model.X, model.y, model.means, model.variances))
-model.extend_arm_set(np.array([[-1.0], [9.0]]))
-model.full_update([1], np.array([fun(-1.0)]))
-model.full_update([0], np.array([fun(5.0)]))
-
-print("[--] model.X: {}\tmodel.y: {}\tmodel.mean: {}\tmodel.var: {}".format(model.X, model.y, model.means, model.variances))
-print("[--] model.ucbs: {}\tmodel.lcbs: {}\tembsize: {}".format(model.ucbs, model.lcbs, model.embedding_size))
-
-model.extend_arm_set(np.array([[0.50], [2.0]]))
-model.full_update([3], np.array([fun(0.50)]))
-model.full_update([4], np.array([fun(2.0)]))
-print("[--] model.ucbs: {}\tmodel.lcbs: {}\tembsize: {}".format(model.ucbs, model.lcbs, model.embedding_size))
+#print("[--] model.X: {}\tmodel.y: {}\tmodel.mean: {}\tmodel.var: {}".format(model.X, model.y, model.means, model.variances))
+#model.extend_arm_set(np.array([[-1.0], [9.0]]))
+#model.full_update([1], np.array([fun(-1.0)]))
+#model.full_update([0], np.array([fun(5.0)]))
+#
+#print("[--] model.X: {}\tmodel.y: {}\tmodel.mean: {}\tmodel.var: {}".format(model.X, model.y, model.means, model.variances))
+#print("[--] model.ucbs: {}\tmodel.lcbs: {}\tembsize: {}".format(model.ucbs, model.lcbs, model.embedding_size))
+#
+#model.extend_arm_set(np.array([[0.50], [2.0]]))
+#model.full_update([3], np.array([fun(0.50)]))
+#model.full_update([4], np.array([fun(2.0)]))
+#print("[--] model.ucbs: {}\tmodel.lcbs: {}\tembsize: {}".format(model.ucbs, model.lcbs, model.embedding_size))
 
 print("-"*100)
 mu, var = model.predict(X)

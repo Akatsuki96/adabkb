@@ -67,6 +67,7 @@ class BKB:
     def initialize(self, x0):
         self.X[0] = x0
         self.X_norms = diagonal_dot(self.X, self.kernel)
+        self.active_set = self.X
         self.__update_embedding()
 
     def __update_arms(self, arms_idx, ys):
@@ -84,6 +85,7 @@ class BKB:
         self.active_set = self.X[dict_arms_count != 0, :]
 
     def __update_embedding(self):
+        print("[UPDEMB] active set: ",self.active_set)
         self.K_mm = self.kernel(self.active_set)
         self.K_km = self.kernel(self.X, self.active_set)
         try:

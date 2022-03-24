@@ -63,7 +63,7 @@ class AdaBKB(AdaptiveOptimizer):
     def __select_candidate(self):
         return np.argmax(self.I)
 
-    def __expand_leaf(self, node, leaf_idx, node_idx):
+    def expand_leaf(self, node, leaf_idx, node_idx):
         children = node.expand_node()
         zeros = np.zeros(len(children))
         self.leaf_set = np.concatenate((np.delete(self.leaf_set, leaf_idx), children))
@@ -89,7 +89,7 @@ class AdaBKB(AdaptiveOptimizer):
             node = self.leaf_set[leaf_idx]
             node_idx = self.get_node_idx(node)
             if self.__can_be_expanded(node_idx, node.level) and (node.level > 0 or self.num_eval > 0):
-                self.__expand_leaf(node, leaf_idx, node_idx)
+                self.expand_leaf(node, leaf_idx, node_idx)
             else:
                 return node, leaf_idx
 
@@ -106,7 +106,7 @@ class AdaBKB(AdaptiveOptimizer):
         self.I[leaf_indices] = np.min([self.model.ucbs[self.node_idx[leaf_indices]], self.model.ucbs[father_idx] + self.Vh[levels - 1]], axis=0) + self.Vh[levels]
 
 
-    def __update_best_lcb(self, xs, node_indices, leaf_indices):
+    def update_best_lcb(self, xs, node_indices, leaf_indices):
         for i in range(node_indices.shape[0]):
             if self.best_lcb[0] is None or node_indices[i] == self.best_lcb[2] or self.best_lcb[1] < self.lcb[node_indices[i]]:
                 self.best_lcb = (xs[i], self.lcb[node_indices[i]], node_indices[i])   
@@ -123,6 +123,6 @@ class AdaBKB(AdaptiveOptimizer):
             self.model.update_emb(idx, np.asarray([ys]))
             self.model.update_mean_variances(self.node_idx)
             self.__update_I(list(range(len(self.leaf_set))))
-        self.__update_best_lcb(xs, idx, leaf_indices)
+        self.update_best_lcb(xs, idx, leaf_indices)
         if self.leaf_set[0].level > 0:
             self.__prune_leafset(np.array(list(range(self.leaf_set.shape[0]))))

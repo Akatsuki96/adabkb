@@ -14,14 +14,14 @@ fun = lambda x: -2*x**2 - 3*np.sin(3*x)
 
 search_space = np.array([[-1.0, 3.0]]).reshape(-1, 2)
 
-X = np.linspace(-3, 6, 5000).reshape(-1, 1)
+X = np.linspace(-1, 3, 5000).reshape(-1, 1)
 y = fun(X)
 
 model_options = {
     'kernel' : GaussianKernel(1.),
     'd' : 1,
     'lam' : 1e-3,
-    'noise_variance' : 1e-4,
+    'noise_variance' : 1.0,
     'F' : 1.0,
     'qbar' : 1.0,
     'delta' : 0.0025,
@@ -73,7 +73,7 @@ ax.plot(X, mu, "-", color="black", label="$\\tilde{\mu}(x)$")
 ax.plot(Xobs, yobs, "o", color="orange")
 ax.fill_between(X.reshape(-1), mu - optimizer.beta * np.sqrt(var), mu + optimizer.beta * np.sqrt(var), color = "black", alpha=0.4)
 ax.plot(optimizer.best_lcb[0], fun(optimizer.best_lcb[0]), 'o', c="green")
-#ax.set_ylim([-5, 5])
+ax.set_ylim([-5, 5])
 
 plt.savefig("adabkb_fun.pdf")
 plt.close(fig)
